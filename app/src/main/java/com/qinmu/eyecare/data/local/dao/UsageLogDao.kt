@@ -22,8 +22,11 @@ interface UsageLogDao {
     @Query("UPDATE usage_logs SET screenOnTimeSeconds = screenOnTimeSeconds + :addedSeconds WHERE date = :date")
     suspend fun addScreenTime(date: String, addedSeconds: Long)
 
-    @Query("UPDATE usage_logs SET restCount = restCount + 1 WHERE date = :date")
-    suspend fun incrementRestCount(date: String)
+    @Query("UPDATE usage_logs SET xiaoQinCount = xiaoQinCount + 1 WHERE date = :date")
+    suspend fun incrementXiaoQinCount(date: String)
+
+    @Query("UPDATE usage_logs SET daQinCount = daQinCount + 1 WHERE date = :date")
+    suspend fun incrementDaQinCount(date: String)
 
     @Query("UPDATE usage_logs SET skipCount = skipCount + 1 WHERE date = :date")
     suspend fun incrementSkipCount(date: String)

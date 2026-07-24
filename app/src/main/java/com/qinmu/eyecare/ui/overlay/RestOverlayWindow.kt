@@ -37,6 +37,8 @@ import com.qinmu.eyecare.ui.theme.QinMuTheme
 import com.qinmu.eyecare.util.TimeUtils
 import kotlinx.coroutines.delay
 
+import com.qinmu.eyecare.data.model.RestType
+
 /**
  * 解决 WindowManager 悬浮窗中 ComposeView 缺乏 LifecycleOwner 导致的致命崩溃
  */
@@ -82,7 +84,7 @@ class RestOverlayWindow(
     private var lifecycleOwner: OverlayLifecycleOwner? = null
 
     @SuppressLint("InflateParams")
-    fun show(totalRestSeconds: Int) {
+    fun show(totalRestSeconds: Int, restType: RestType = RestType.XIAO_QIN) {
         if (overlayView != null) return
 
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -118,6 +120,7 @@ class RestOverlayWindow(
                 QinMuTheme {
                     RestOverlayContent(
                         totalRestSeconds = totalRestSeconds,
+                        restType = restType,
                         onSkip = {
                             dismiss()
                             onSkipRest()
@@ -155,6 +158,7 @@ class RestOverlayWindow(
 @Composable
 private fun RestOverlayContent(
     totalRestSeconds: Int,
+    restType: RestType,
     onSkip: () -> Unit,
     onFinish: () -> Unit
 ) {
@@ -171,8 +175,8 @@ private fun RestOverlayContent(
 
     val infiniteTransition = rememberInfiniteTransition(label = "breathe")
     val breatheScale by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.15f,
+        initialValue = 0.88f,
+        targetValue = 1.12f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 3500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -180,58 +184,163 @@ private fun RestOverlayContent(
         label = "breatheScale"
     )
 
+    val isDaQin = restType == RestType.DA_QIN
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xF00D1F17)),
+            .background(if (isDaQin) Color(0xF00B1A30) else Color(0xF00D1F17)),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth()
         ) {
-            Text(
-                text = "🌿 沁目 · 护眼休息时刻",
-                color = Color(0xFF81C784),
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
+            // 模式标题
+            Surface(
+                color = if (isDaQin) Color(0x334FC3F7) else Color(0x3381C784),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    text = if (isDaQin) "🧘 大沁 · 深度放松时刻" else "🌿 小沁 · 视力微休息",
+                    color = if (isDaQin) Color(0xFF81D4FA) else Color(0xFF81C784),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "请将视线移开屏幕，看向 6 米外的远方放松眼睛",
-                color = Color.White.copy(alpha = 0.8f),
+                text = if (isDaQin)
+                    "连续专注久坐，请起身活动身体、深呼吸并做眼保健操"
+                else
+                    "请将视线移开屏幕，看向 6 米外的远处放松眼肌",
+                color = Color.White.copy(alpha = 0.85f),
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // 倒计时呼吸圆环
             Box(
-                modifier = Modifier
-                    .size(180.dp)
-                    .scale(breatheScale)
-                    .background(Color(0x3381C784), shape = CircleShape),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(160.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(130.dp)
-                        .background(Color(0xFF2E7D32), shape = CircleShape),
+                        .size(160.dp)
+                        .scale(breatheScale)
+                        .background(
+                            if (isDaQin) Color(0x330288D1) else Color(0x3381C784),
+                            shape = CircleShape
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .size(116.dp)
+                        .background(
+                            if (isDaQin) Color(0xFF0277BD) else Color(0xFF2E7D32),
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = TimeUtils.formatSecondsToMS(remainingSeconds),
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = if (isDaQin) "深度休息" else "远眺倒计时",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 🌟 护眼姿势与电子设备视距指南卡片 🌟
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.08f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp)
+                ) {
                     Text(
-                        text = TimeUtils.formatSecondsToMS(remainingSeconds),
-                        color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        text = "📐 正确用眼与设备安全距离",
+                        color = Color(0xFFFFD54F),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "📱 手机/平板视距",
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = "保持 33 ~ 40 cm\n(约半臂距离)",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "💻 电脑显示器视距",
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = "保持 50 ~ 70 cm\n(约一臂直伸距离)",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = Color.White.copy(alpha = 0.12f))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = if (isDaQin)
+                            "💡 护眼贴士：搓热双手掌心温敷双眼，起身接杯水活动腰颈关节"
+                        else
+                            "💡 护眼贴士：保持环境光充足，多做完整眨眼动作润泽角膜",
+                        color = Color(0xFFB2DFDB),
+                        fontSize = 11.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -244,17 +353,17 @@ private fun RestOverlayContent(
                         contentColor = Color(0xFFFFB74D)
                     )
                 ) {
-                    Text(text = "跳过本次沁目", fontSize = 15.sp)
+                    Text(text = "跳过本次沁目", fontSize = 14.sp)
                 }
 
                 Button(
                     onClick = onFinish,
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
+                        containerColor = if (isDaQin) Color(0xFF0288D1) else Color(0xFF4CAF50)
                     )
                 ) {
-                    Text(text = "完成休息", fontSize = 15.sp, color = Color.White)
+                    Text(text = "完成休息", fontSize = 14.sp, color = Color.White)
                 }
             }
         }

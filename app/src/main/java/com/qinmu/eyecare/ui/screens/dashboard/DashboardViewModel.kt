@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.qinmu.eyecare.QinMuApplication
+import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.data.model.UserPreferences
 import com.qinmu.eyecare.service.EyeProtectionService
 import com.qinmu.eyecare.service.FilterOverlayService
@@ -28,6 +29,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     val currentScreenSeconds: StateFlow<Long> = EyeProtectionService.currentScreenSeconds
     val isPaused: StateFlow<Boolean> = EyeProtectionService.isPaused
+    val xiaoQinCompletedCount: StateFlow<Int> = EyeProtectionService.xiaoQinCompletedCount
+    val effectiveSpecialMode: StateFlow<SpecialMode> = EyeProtectionService.effectiveSpecialMode
+
+    fun setManualSpecialMode(mode: SpecialMode) {
+        viewModelScope.launch {
+            repository.updateManualSpecialMode(mode)
+        }
+    }
 
     fun startService(context: Context) {
         try {

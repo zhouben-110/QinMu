@@ -33,16 +33,25 @@ fun StatisticsScreen(
 ) {
     val logs by viewModel.recent7DaysLogs.collectAsState()
 
-    val totalRestCount = logs.sumOf { it.restCount }
+    val totalXiaoQin = logs.sumOf { it.xiaoQinCount }
+    val totalDaQin = logs.sumOf { it.daQinCount }
+    val totalRestCount = totalXiaoQin + totalDaQin
     val totalSkipCount = logs.sumOf { it.skipCount }
+    val totalRestSeconds = logs.sumOf { it.totalRestDurationSeconds }
     val totalScreenSeconds = logs.sumOf { it.screenOnTimeSeconds }
+
+    val complianceRate = if (totalRestCount + totalSkipCount > 0) {
+        ((totalRestCount.toFloat() / (totalRestCount + totalSkipCount).toFloat()) * 100).toInt()
+    } else {
+        100
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "📊 用眼与休息统计",
+                        text = "📊 小沁/大沁护眼详细统计",
                         fontWeight = FontWeight.Bold,
                         color = GreenPrimary
                     )
@@ -62,28 +71,125 @@ fun StatisticsScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 核心统计指标卡片 Row
+            // 1. 核心四大指标看板 (2x2 Grid)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 StatCard(
                     modifier = Modifier.weight(1f),
-                    title = "累计休息次数",
-                    value = "$totalRestCount 次",
+                    icon = "🌿",
+                    title = "小沁微休息",
+                    value = "$totalXiaoQin 次",
+                    subtitle = "20s 远眺放松",
                     color = GreenPrimary
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
-                    title = "跳过沁目次数",
-                    value = "$totalSkipCount 次",
-                    color = WarmOrange
+                    icon = "🧘",
+                    title = "大沁深度放松",
+                    value = "$totalDaQin 次",
+                    subtitle = "3-5min 伸展拉伸",
+                    color = Color(0xFF0288D1)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "⏱️",
+                    title = "护眼休息总时长",
+                    value = TimeUtils.formatSecondsToMS(totalRestSeconds.toInt()),
+                    subtitle = "实际给眼睛放假",
+                    color = Color(0xFF00897B)
+                )
+                StatCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "🎯",
+                    title = "护眼依从率",
+                    value = "$complianceRate%",
+                    subtitle = "跳过 $totalSkipCount 次",
+                    color = if (complianceRate >= 80) GreenPrimary else WarmOrange
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 近7天用眼趋势 Canvas 柱状图
+            // 2. 小沁 vs 大沁 完成结构分布卡片
+            if (totalRestCount > 0) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "小沁与大沁完成分布占比",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val xiaoRatio = totalXiaoQin.toFloat() / totalRestCount.toFloat()
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFE0E0E0))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(xiaoRatio.coerceAtLeast(0.01f))
+                                    .background(GreenPrimary)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight((1f - xiaoRatio).coerceAtLeast(0.01f))
+                                    .background(Color(0xFF0288D1))
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(10.dp).background(GreenPrimary, CircleShape))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "小沁 (微休息): $totalXiaoQin 次 (${(xiaoRatio * 100).toInt()}%)",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(10.dp).background(Color(0xFF0288D1), CircleShape))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "大沁 (深度): $totalDaQin 次 (${((1f - xiaoRatio) * 100).toInt()}%)",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // 3. 近7天用眼趋势 Canvas 柱状图
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -94,13 +200,24 @@ fun StatisticsScreen(
                         .fillMaxWidth()
                         .padding(20.dp)
                 ) {
-                    Text(
-                        text = "近7天连屏使用时长 (分钟)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "近7天连屏使用时长 (分钟)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = "近7天总连屏: ${totalScreenSeconds / 3600}小时 ${(totalScreenSeconds % 3600) / 60}分",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     if (logs.isEmpty()) {
                         Box(
@@ -109,7 +226,7 @@ fun StatisticsScreen(
                                 .height(160.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "暂无统计数据", color = Color.Gray, fontSize = 14.sp)
+                            Text(text = "暂无数据，服务开启后自动记录", color = Color.Gray, fontSize = 14.sp)
                         }
                     } else {
                         WeeklyBarChart(logs = logs.reversed())
@@ -119,17 +236,27 @@ fun StatisticsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 历史明细列表
+            // 4. 历史明细列表
             Text(
-                text = "每日记录明细",
+                text = "📅 每日用眼与大小沁记录明细",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
+                fontSize = 15.sp,
+                color = GreenPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            logs.forEach { item ->
-                LogItemRow(log = item)
-                Spacer(modifier = Modifier.height(8.dp))
+            if (logs.isEmpty()) {
+                Text(
+                    text = "暂无历史统计日志",
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+            } else {
+                logs.forEach { item ->
+                    DetailedLogItemRow(log = item)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -140,8 +267,10 @@ fun StatisticsScreen(
 @Composable
 private fun StatCard(
     modifier: Modifier = Modifier,
+    icon: String,
     title: String,
     value: String,
+    subtitle: String,
     color: Color
 ) {
     Card(
@@ -150,11 +279,17 @@ private fun StatCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(14.dp)
         ) {
-            Text(text = title, fontSize = 12.sp, color = Color.Gray)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = icon, fontSize = 14.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = title, fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+            }
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = value, fontSize = 19.sp, fontWeight = FontWeight.Bold, color = color)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = subtitle, fontSize = 10.sp, color = Color.Gray.copy(alpha = 0.8f))
         }
     }
 }
@@ -166,7 +301,7 @@ private fun WeeklyBarChart(logs: List<UsageLogEntity>) {
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(150.dp)
     ) {
         val width = size.width
         val height = size.height
@@ -176,7 +311,7 @@ private fun WeeklyBarChart(logs: List<UsageLogEntity>) {
 
         logs.forEachIndexed { index, entity ->
             val minutes = entity.screenOnTimeSeconds / 60
-            val barHeight = (minutes.toFloat() / maxMinutes.toFloat()) * (height * 0.8f)
+            val barHeight = (minutes.toFloat() / maxMinutes.toFloat()) * (height * 0.75f)
             val left = index * spacePerBar + (spacePerBar - barWidth) / 2
             val top = height - barHeight - 20.dp.toPx()
 
@@ -207,38 +342,91 @@ private fun WeeklyBarChart(logs: List<UsageLogEntity>) {
 }
 
 @Composable
-private fun LogItemRow(log: UsageLogEntity) {
+private fun DetailedLogItemRow(log: UsageLogEntity) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(14.dp)
         ) {
-            Column {
-                Text(text = log.date, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                Spacer(modifier = Modifier.height(2.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = log.date, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 Text(
-                    text = "屏幕累计: ${TimeUtils.formatSecondsToHMS(log.screenOnTimeSeconds)}",
+                    text = "屏幕使用: ${TimeUtils.formatSecondsToHMS(log.screenOnTimeSeconds)}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.DarkGray
                 )
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(
-                    onClick = {},
-                    label = { Text("休息: ${log.restCount}次", fontSize = 11.sp) }
-                )
-                AssistChip(
-                    onClick = {},
-                    label = { Text("跳过: ${log.skipCount}次", fontSize = 11.sp) }
-                )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = Color(0xFFE8F5E9),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "🌿 小沁 ${log.xiaoQinCount} 次",
+                        fontSize = 11.sp,
+                        color = GreenPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+
+                Surface(
+                    color = Color(0xFFE1F5FE),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "🧘 大沁 ${log.daQinCount} 次",
+                        fontSize = 11.sp,
+                        color = Color(0xFF0288D1),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+
+                Surface(
+                    color = Color(0xFFE0F2F1),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "⏱️ 放假 ${TimeUtils.formatSecondsToMS(log.totalRestDurationSeconds.toInt())}",
+                        fontSize = 11.sp,
+                        color = Color(0xFF00695C),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+
+                if (log.skipCount > 0) {
+                    Surface(
+                        color = Color(0xFFFFF3E0),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "⚠️ 跳过 ${log.skipCount} 次",
+                            fontSize = 11.sp,
+                            color = WarmOrange,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }

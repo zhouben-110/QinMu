@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qinmu.eyecare.data.model.RemindMode
 import com.qinmu.eyecare.data.model.RestSoundEffect
+import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.ui.screens.dashboard.UpdateDialog
 import com.qinmu.eyecare.ui.theme.GreenPrimary
 import com.qinmu.eyecare.ui.theme.WarmOrange
@@ -177,6 +178,80 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // 1.5 智能会议与游戏免打扰配置
+            Text(
+                text = "💼 会议与 🎮 游戏智能免打扰",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = GreenPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // 手动模式选择
+                    Text(text = "手动模式锁定", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SpecialMode.values().forEach { mode ->
+                            FilterChip(
+                                selected = prefs.manualSpecialMode == mode,
+                                onClick = { viewModel.setManualSpecialMode(mode) },
+                                label = { Text("${mode.iconRes} ${mode.displayName}") }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color(0xFFF0F0F0))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 自动识别开关
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "💼 自动识别会议应用 (免打扰)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text(text = "自动检测腾讯会议、钉钉、Zoom、Teams等前台运行", fontSize = 11.sp, color = Color.Gray)
+                        }
+                        Switch(
+                            checked = prefs.isAutoMeetingModeEnabled,
+                            onCheckedChange = { viewModel.setAutoMeetingModeEnabled(it) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "🎮 自动识别游戏应用 (免打扰)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text(text = "前台运行全屏游戏时，绝对挂起全屏遮罩与响铃", fontSize = 11.sp, color = Color.Gray)
+                        }
+                        Switch(
+                            checked = prefs.isAutoGameModeEnabled,
+                            onCheckedChange = { viewModel.setAutoGameModeEnabled(it) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // 2. 提醒音效设置区 (含音效试听与自选 MP3 截取)
             Text(
                 text = "提醒提示音效",
@@ -258,9 +333,13 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. 自定义时间周期配置区 (支持点选与键盘手动输入)
+            var customDaQinRestText by remember(prefs.daQinRestSeconds) {
+                mutableStateOf(prefs.daQinRestSeconds.toString())
+            }
+
+            // 3. 时间周期与小沁大沁交替配置
             Text(
-                text = "时间周期配置 (支持自由输入)",
+                text = "小沁/大沁提醒周期与规则配置",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 color = GreenPrimary,
@@ -273,13 +352,43 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // 小大沁交替模式总开关
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "开启【小沁 + 大沁】智能交替守护",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            Text(
+                                text = "连续完成数次【小沁】微休息后，下一次自动升级为【大沁】深度放松",
+                                fontSize = 11.sp,
+                                color = Color.Gray
+                            )
+                        }
+                        Switch(
+                            checked = prefs.isDualCycleEnabled,
+                            onCheckedChange = { viewModel.setDualCycleEnabled(it) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color(0xFFF0F0F0))
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
-                        text = "1. 连屏使用提醒间隔",
+                        text = "1. 🌿 小沁（微休息）配置",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        color = GreenPrimary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    Text(text = "连屏提醒间隔", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -297,8 +406,6 @@ fun SettingsScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = customIntervalText,
                         onValueChange = { newValue ->
@@ -308,7 +415,7 @@ fun SettingsScreen(
                                 viewModel.setRemindInterval(min)
                             }
                         },
-                        label = { Text("自定义提醒间隔 (分钟)") },
+                        label = { Text("自定义小沁间隔 (分钟)") },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                         trailingIcon = { Text("分钟", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
                         singleLine = true,
@@ -320,36 +427,25 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Divider(color = Color(0xFFF0F0F0))
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "2. 单次护眼休息时长",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    Text(text = "小沁休息时长 (远眺)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        listOf(20, 60, 180, 300).forEach { seconds ->
-                            val labelText = if (seconds < 60) "${seconds}秒" else "${seconds / 60}分钟"
+                        listOf(15, 20, 30, 45).forEach { seconds ->
                             FilterChip(
                                 selected = prefs.restDurationSeconds == seconds,
                                 onClick = {
                                     viewModel.setRestDuration(seconds)
                                     customRestText = seconds.toString()
                                 },
-                                label = { Text(labelText) }
+                                label = { Text("${seconds}秒") }
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = customRestText,
@@ -360,7 +456,7 @@ fun SettingsScreen(
                                 viewModel.setRestDuration(sec)
                             }
                         },
-                        label = { Text("自定义休息时长 (秒)") },
+                        label = { Text("自定义小沁时长 (秒)") },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                         trailingIcon = { Text("秒", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
                         singleLine = true,
@@ -371,6 +467,138 @@ fun SettingsScreen(
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    if (prefs.isDualCycleEnabled) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Divider(color = Color(0xFFF0F0F0))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "2. 🧘 大沁（深度放松）规则配置",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color(0xFF0288D1)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(text = "触发频次 (完成几项小沁后触发大沁)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            listOf(2, 3, 4, 5).forEach { count ->
+                                FilterChip(
+                                    selected = prefs.daQinCycleCount == count,
+                                    onClick = { viewModel.setDaQinCycleCount(count) },
+                                    label = { Text("每 ${count} 次小沁") }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(text = "大沁休息时长 (深度全身放松)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            listOf(120, 180, 300, 600).forEach { seconds ->
+                                val min = seconds / 60
+                                FilterChip(
+                                    selected = prefs.daQinRestSeconds == seconds,
+                                    onClick = {
+                                        viewModel.setDaQinRestSeconds(seconds)
+                                        customDaQinRestText = seconds.toString()
+                                    },
+                                    label = { Text("${min}分钟") }
+                                )
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = customDaQinRestText,
+                            onValueChange = { newValue ->
+                                val filtered = newValue.filter { it.isDigit() }
+                                customDaQinRestText = filtered
+                                filtered.toIntOrNull()?.let { sec ->
+                                    viewModel.setDaQinRestSeconds(sec)
+                                }
+                            },
+                            label = { Text("自定义大沁时长 (秒)") },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            trailingIcon = { Text("秒", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 正确视距与用眼指南卡片
+            Text(
+                text = "📐 电子设备正确视距与护眼常识",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = GreenPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "📱 手机 / 平板视距：",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF33691E)
+                        )
+                        Text(
+                            text = "33 ~ 40 cm (约一臂折半)",
+                            fontSize = 13.sp,
+                            color = Color(0xFF1B5E20)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "💻 电脑显示屏视距：",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF33691E)
+                        )
+                        Text(
+                            text = "50 ~ 70 cm (约手臂伸直长度)",
+                            fontSize = 13.sp,
+                            color = Color(0xFF1B5E20)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "👀 视线倾角建议：",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF33691E)
+                        )
+                        Text(
+                            text = "屏幕中心向下倾斜 10° - 15°",
+                            fontSize = 13.sp,
+                            color = Color(0xFF1B5E20)
+                        )
+                    }
                 }
             }
 

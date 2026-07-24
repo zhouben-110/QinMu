@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.qinmu.eyecare.QinMuApplication
 import com.qinmu.eyecare.data.model.RemindMode
 import com.qinmu.eyecare.data.model.RestSoundEffect
+import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.data.model.UserPreferences
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +46,44 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         val safeSeconds = seconds.coerceIn(5, 600)
         viewModelScope.launch {
             repository.updateRestDuration(safeSeconds)
+        }
+    }
+
+    fun setDualCycleEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateDualCycleEnabled(enabled)
+        }
+    }
+
+    fun setDaQinCycleCount(count: Int) {
+        val safeCount = count.coerceIn(1, 10)
+        viewModelScope.launch {
+            repository.updateDaQinCycleCount(safeCount)
+        }
+    }
+
+    fun setDaQinRestSeconds(seconds: Int) {
+        val safeSeconds = seconds.coerceIn(30, 1800)
+        viewModelScope.launch {
+            repository.updateDaQinRestSeconds(safeSeconds)
+        }
+    }
+
+    fun setManualSpecialMode(mode: SpecialMode) {
+        viewModelScope.launch {
+            repository.updateManualSpecialMode(mode)
+        }
+    }
+
+    fun setAutoGameModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateAutoGameModeEnabled(enabled)
+        }
+    }
+
+    fun setAutoMeetingModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateAutoMeetingModeEnabled(enabled)
         }
     }
 }

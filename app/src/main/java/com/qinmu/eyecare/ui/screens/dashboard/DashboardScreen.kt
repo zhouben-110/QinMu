@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.ui.theme.GreenPrimary
 import com.qinmu.eyecare.ui.theme.WarmOrange
 import com.qinmu.eyecare.util.TimeUtils
@@ -41,6 +42,8 @@ fun DashboardScreen(
     val prefs by viewModel.userPreferences.collectAsState()
     val currentSeconds by viewModel.currentScreenSeconds.collectAsState()
     val isPaused by viewModel.isPaused.collectAsState()
+    val completedCount by viewModel.xiaoQinCompletedCount.collectAsState()
+    val effectiveMode by viewModel.effectiveSpecialMode.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.startService(context)
@@ -181,45 +184,169 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 提醒模式显示卡片
+            // 💼 会议 & 🎮 游戏特例免打扰模式快捷选择卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (effectiveMode != SpecialMode.NONE) Color(0xFFFFF3E0) else MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "场景免打扰快捷控制",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        if (effectiveMode != SpecialMode.NONE) {
+                            Surface(
+                                color = WarmOrange,
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = "生效中: ${effectiveMode.iconRes} ${effectiveMode.displayName}",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SpecialMode.values().forEach { mode ->
+                            FilterChip(
+                                selected = prefs.manualSpecialMode == mode,
+                                onClick = { viewModel.setManualSpecialMode(mode) },
+                                label = { Text("${mode.iconRes} ${mode.displayName}") }
+                            )
+                        }
+                    }
+
+                    if (effectiveMode != SpecialMode.NONE) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "提示：全屏遮罩与强提示音已暂护挂起，不会中断您的画面或演示。",
+                            fontSize = 11.sp,
+                            color = Color(0xFFE65100)
+                        )
+                    }
+                }
+            }
+
+            // 小大沁守护模式与交替进度卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FBE7))
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFDCEDC8)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = GreenPrimary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "提醒形式: ${prefs.remindMode.displayName}",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = if (prefs.isDualCycleEnabled) "🌿 小沁 + 🧘 大沁 智能交替" else "🌿 小沁 (微休息模式)",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GreenPrimary
+                            )
+                        }
+                    }
+
+                    if (prefs.isDualCycleEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Divider(color = Color(0xFFE0E0E0))
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val currentCycleIndex = (completedCount % prefs.daQinCycleCount) + 1
+                        val isNextDaQin = currentCycleIndex == prefs.daQinCycleCount
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "交替进度：第 $currentCycleIndex / ${prefs.daQinCycleCount} 轮",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isNextDaQin) Color(0xFF0288D1) else Color(0xFF388E3C)
+                            )
+                            Surface(
+                                color = if (isNextDaQin) Color(0xFFE1F5FE) else Color(0xFFE8F5E9),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = if (isNextDaQin) "下一次：🧘 大沁 (${prefs.daQinRestSeconds / 60}分钟)" else "下一次：🌿 小沁 (${prefs.restDurationSeconds}秒)",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isNextDaQin) Color(0xFF0288D1) else Color(0xFF2E7D32),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 正确用眼距离常识卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFDCEDC8)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = null,
-                            tint = GreenPrimary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "当前提醒模式",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = prefs.remindMode.displayName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GreenPrimary
-                        )
-                    }
+                    Text(
+                        text = "📐 视距建议：",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF57F17)
+                    )
+                    Text(
+                        text = "📱 手机 33~40cm | 💻 电脑 50~70cm",
+                        fontSize = 12.sp,
+                        color = Color(0xFFE65100)
+                    )
                 }
             }
 

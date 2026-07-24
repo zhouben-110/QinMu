@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.qinmu.eyecare.data.local.dao.UsageLogDao
 import com.qinmu.eyecare.data.model.UsageLogEntity
 
-@Database(entities = [UsageLogEntity::class], version = 1, exportSchema = false)
+@Database(entities = [UsageLogEntity::class], version = 2, exportSchema = false)
 abstract class QinMuDatabase : RoomDatabase() {
 
     abstract fun usageLogDao(): UsageLogDao
