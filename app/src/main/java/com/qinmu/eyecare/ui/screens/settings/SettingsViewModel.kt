@@ -1,0 +1,50 @@
+package com.qinmu.eyecare.ui.screens.settings
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.qinmu.eyecare.QinMuApplication
+import com.qinmu.eyecare.data.model.RemindMode
+import com.qinmu.eyecare.data.model.RestSoundEffect
+import com.qinmu.eyecare.data.model.UserPreferences
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = (application as QinMuApplication).preferencesRepository
+
+    val userPreferences: StateFlow<UserPreferences> = repository.userPreferencesFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UserPreferences()
+    )
+
+    fun setRemindMode(mode: RemindMode) {
+        viewModelScope.launch {
+            repository.updateRemindMode(mode)
+        }
+    }
+
+    fun setSoundEffect(soundEffect: RestSoundEffect) {
+        viewModelScope.launch {
+            repository.updateSoundEffect(soundEffect)
+        }
+    }
+
+    fun setRemindInterval(minutes: Int) {
+        val safeMinutes = minutes.coerceIn(1, 180)
+        viewModelScope.launch {
+            repository.updateRemindInterval(safeMinutes)
+        }
+    }
+
+    fun setRestDuration(seconds: Int) {
+        val safeSeconds = seconds.coerceIn(5, 600)
+        viewModelScope.launch {
+            repository.updateRestDuration(safeSeconds)
+        }
+    }
+}
