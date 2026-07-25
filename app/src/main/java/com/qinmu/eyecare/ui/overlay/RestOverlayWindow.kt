@@ -189,7 +189,7 @@ private fun RestOverlayContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isDaQin) Color(0xF00B1A30) else Color(0xF00D1F17)),
+            .background(if (isDaQin) Color(0xF2091424) else Color(0xF20A1A12)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -201,26 +201,26 @@ private fun RestOverlayContent(
         ) {
             // 模式标题
             Surface(
-                color = if (isDaQin) Color(0x334FC3F7) else Color(0x3381C784),
-                shape = RoundedCornerShape(20.dp)
+                color = if (isDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue.copy(alpha = 0.2f) else com.qinmu.eyecare.ui.theme.SpotifyGreen.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(500.dp)
             ) {
                 Text(
                     text = if (isDaQin) "🧘 大沁 · 深度放松时刻" else "🌿 小沁 · 视力微休息",
-                    color = if (isDaQin) Color(0xFF81D4FA) else Color(0xFF81C784),
-                    fontSize = 18.sp,
+                    color = if (isDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue else com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
                 text = if (isDaQin)
                     "连续专注久坐，请起身活动身体、深呼吸并做眼保健操"
                 else
                     "请将视线移开屏幕，看向 6 米外的远处放松眼肌",
-                color = Color.White.copy(alpha = 0.85f),
+                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
@@ -230,22 +230,22 @@ private fun RestOverlayContent(
             // 倒计时呼吸圆环
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(160.dp)
+                modifier = Modifier.size(170.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(170.dp)
                         .scale(breatheScale)
                         .background(
-                            if (isDaQin) Color(0x330288D1) else Color(0x3381C784),
+                            if (isDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue.copy(alpha = 0.25f) else com.qinmu.eyecare.ui.theme.SpotifyGreen.copy(alpha = 0.25f),
                             shape = CircleShape
                         )
                 )
                 Box(
                     modifier = Modifier
-                        .size(116.dp)
+                        .size(124.dp)
                         .background(
-                            if (isDaQin) Color(0xFF0277BD) else Color(0xFF2E7D32),
+                            if (isDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue else com.qinmu.eyecare.ui.theme.SpotifyGreen,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -253,14 +253,15 @@ private fun RestOverlayContent(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = TimeUtils.formatSecondsToMS(remainingSeconds),
-                            color = Color.White,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.ExtraBold
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = if (isDaQin) "深度休息" else "远眺倒计时",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 10.sp
+                            color = Color.Black.copy(alpha = 0.7f),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -273,15 +274,15 @@ private fun RestOverlayContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.08f)
+                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(14.dp)
+                    modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
                         text = "📐 正确用眼与设备安全距离",
-                        color = Color(0xFFFFD54F),
+                        color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
                     )
@@ -295,13 +296,13 @@ private fun RestOverlayContent(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "📱 手机/平板视距",
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
                             Text(
                                 text = "保持 33 ~ 40 cm\n(约半臂距离)",
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
                                 fontSize = 11.sp,
                                 lineHeight = 15.sp
                             )
@@ -312,13 +313,13 @@ private fun RestOverlayContent(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "💻 电脑显示器视距",
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
                             Text(
                                 text = "保持 50 ~ 70 cm\n(约一臂直伸距离)",
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
                                 fontSize = 11.sp,
                                 lineHeight = 15.sp
                             )
@@ -326,7 +327,7 @@ private fun RestOverlayContent(
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Divider(color = Color.White.copy(alpha = 0.12f))
+                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
@@ -334,36 +335,42 @@ private fun RestOverlayContent(
                             "💡 护眼贴士：搓热双手掌心温敷双眼，起身接杯水活动腰颈关节"
                         else
                             "💡 护眼贴士：保持环境光充足，多做完整眨眼动作润泽角膜",
-                        color = Color(0xFFB2DFDB),
+                        color = com.qinmu.eyecare.ui.theme.SpotifyOrange,
                         fontSize = 11.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // 全胶囊 Pill 按键
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(
+                Button(
                     onClick = onSkip,
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFFFB74D)
-                    )
+                    shape = RoundedCornerShape(500.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                        contentColor = com.qinmu.eyecare.ui.theme.SpotifyOrange
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, com.qinmu.eyecare.ui.theme.SpotifyOrange.copy(alpha = 0.5f)),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
                 ) {
-                    Text(text = "跳过本次沁目", fontSize = 14.sp)
+                    Text(text = "跳过本次沁目", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Button(
                     onClick = onFinish,
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(500.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isDaQin) Color(0xFF0288D1) else Color(0xFF4CAF50)
-                    )
+                        containerColor = if (isDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue else com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                        contentColor = Color.Black
+                    ),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
                 ) {
-                    Text(text = "完成休息", fontSize = 14.sp, color = Color.White)
+                    Text(text = "完成休息", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

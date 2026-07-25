@@ -5,6 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,7 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.qinmu.eyecare.ui.screens.dashboard.DashboardScreen
 import com.qinmu.eyecare.ui.screens.settings.SettingsScreen
 import com.qinmu.eyecare.ui.screens.statistics.StatisticsScreen
-import com.qinmu.eyecare.ui.theme.GreenPrimary
+import com.qinmu.eyecare.ui.theme.SpotifyGreen
 
 @Composable
 fun MainScreen() {
@@ -30,13 +32,15 @@ fun MainScreen() {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface,
+                tonalElevation = 8.dp
             ) {
                 screens.forEach { screen ->
+                    val selected = currentRoute == screen.route
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.title) },
-                        label = { Text(screen.title) },
-                        selected = currentRoute == screen.route,
+                        label = { Text(screen.title, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                        selected = selected,
                         onClick = {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
@@ -49,9 +53,11 @@ fun MainScreen() {
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = GreenPrimary,
-                            selectedTextColor = GreenPrimary,
-                            indicatorColor = MaterialTheme.colorScheme.background
+                            selectedIconColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                            selectedTextColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                            unselectedIconColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                            unselectedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                            indicatorColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
                         )
                     )
                 }

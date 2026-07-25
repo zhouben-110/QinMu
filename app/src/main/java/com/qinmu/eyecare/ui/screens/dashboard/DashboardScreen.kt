@@ -61,17 +61,28 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "🌿 沁目 · 护眼看板",
-                        fontWeight = FontWeight.Bold,
-                        color = GreenPrimary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "🌿 沁目",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                            fontSize = 20.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "· 护眼看板",
+                            fontWeight = FontWeight.Medium,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                            fontSize = 16.sp
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
                 )
             )
-        }
+        },
+        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -81,14 +92,14 @@ fun DashboardScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // 环形倒计时进度看板
+            // 环形倒计时进度看板 (Spotify Inspired Surface Card)
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -96,22 +107,29 @@ fun DashboardScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = if (isPaused) "护眼计时已暂停" else "已连续使用屏幕",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                    Surface(
+                        color = if (isPaused) com.qinmu.eyecare.ui.theme.SpotifyDarkElevated else com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                        shape = RoundedCornerShape(500.dp)
+                    ) {
+                        Text(
+                            text = if (isPaused) "⏸️ 护眼计时已暂停" else "⏱️ 已连续使用屏幕",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isPaused) com.qinmu.eyecare.ui.theme.SpotifyOrange else com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(200.dp)
+                        modifier = Modifier.size(210.dp)
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val strokeWidth = 14.dp.toPx()
                             drawArc(
-                                color = Color(0xFFE8F5E9),
+                                color = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
                                 startAngle = 135f,
                                 sweepAngle = 270f,
                                 useCenter = false,
@@ -119,7 +137,11 @@ fun DashboardScreen(
                             )
                             drawArc(
                                 brush = Brush.linearGradient(
-                                    listOf(Color(0xFF81C784), GreenPrimary, WarmOrange)
+                                    listOf(
+                                        com.qinmu.eyecare.ui.theme.SpotifyGreenDark,
+                                        com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                        com.qinmu.eyecare.ui.theme.SpotifyOrange
+                                    )
                                 ),
                                 startAngle = 135f,
                                 sweepAngle = 270f * animatedProgress,
@@ -131,29 +153,34 @@ fun DashboardScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = TimeUtils.formatSecondsToHMS(currentSeconds),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = GreenPrimary
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "目标: ${prefs.remindIntervalMinutes}分钟",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                text = "目标: ${prefs.remindIntervalMinutes} 分钟",
+                                fontSize = 13.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // 快捷控制按键栏 (暂停 / 跳过本次沁目)
+                    // 快捷控制按键栏 (全胶囊 pill buttons 遵循 design.md)
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
+                        Button(
                             onClick = { viewModel.togglePause(context) },
-                            shape = RoundedCornerShape(20.dp)
+                            shape = RoundedCornerShape(500.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isPaused) com.qinmu.eyecare.ui.theme.SpotifyGreen else com.qinmu.eyecare.ui.theme.SpotifyDarkElevated,
+                                contentColor = if (isPaused) Color.Black else com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                            ),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
@@ -161,22 +188,35 @@ fun DashboardScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = if (isPaused) "恢复" else "暂停")
+                            Text(
+                                text = if (isPaused) "恢复" else "暂停",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
                         }
 
                         Button(
                             onClick = { viewModel.skipCurrentRest(context) },
-                            shape = RoundedCornerShape(20.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = WarmOrange)
+                            shape = RoundedCornerShape(500.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                contentColor = com.qinmu.eyecare.ui.theme.SpotifyOrange
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, com.qinmu.eyecare.ui.theme.SpotifyOrange.copy(alpha = 0.5f)),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
-                                tint = Color.White
+                                tint = com.qinmu.eyecare.ui.theme.SpotifyOrange
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "跳过本次沁目", color = Color.White)
+                            Text(
+                                text = "跳过本次沁目",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
                         }
                     }
                 }
@@ -187,9 +227,9 @@ fun DashboardScreen(
             // 💼 会议 & 🎮 游戏特例免打扰模式快捷选择卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (effectiveMode != SpecialMode.NONE) Color(0xFFFFF3E0) else MaterialTheme.colorScheme.surface
+                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -201,55 +241,66 @@ fun DashboardScreen(
                         Text(
                             text = "场景免打扰快捷控制",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 15.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                         )
                         if (effectiveMode != SpecialMode.NONE) {
                             Surface(
-                                color = WarmOrange,
-                                shape = RoundedCornerShape(12.dp)
+                                color = com.qinmu.eyecare.ui.theme.SpotifyOrange,
+                                shape = RoundedCornerShape(500.dp)
                             ) {
                                 Text(
                                     text = "生效中: ${effectiveMode.iconRes} ${effectiveMode.displayName}",
-                                    color = Color.White,
+                                    color = Color.Black,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         SpecialMode.values().forEach { mode ->
+                            val isSelected = prefs.manualSpecialMode == mode
                             FilterChip(
-                                selected = prefs.manualSpecialMode == mode,
+                                selected = isSelected,
                                 onClick = { viewModel.setManualSpecialMode(mode) },
-                                label = { Text("${mode.iconRes} ${mode.displayName}") }
+                                shape = RoundedCornerShape(500.dp),
+                                label = { Text("${mode.iconRes} ${mode.displayName}") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    selectedLabelColor = Color.Black,
+                                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                    labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                         }
                     }
 
                     if (effectiveMode != SpecialMode.NONE) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "提示：全屏遮罩与强提示音已暂护挂起，不会中断您的画面或演示。",
-                            fontSize = 11.sp,
-                            color = Color(0xFFE65100)
+                            text = "提示：全屏遮罩与强提示音已挂起，保证演示与游戏流畅。",
+                            fontSize = 12.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyOrange
                         )
                     }
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 小大沁守护模式与交替进度卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FBE7))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(
                     modifier = Modifier
@@ -259,37 +310,38 @@ fun DashboardScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFDCEDC8)),
+                                .background(com.qinmu.eyecare.ui.theme.SpotifyDarkControl),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = null,
-                                tint = GreenPrimary
+                                tint = com.qinmu.eyecare.ui.theme.SpotifyGreen
                             )
                         }
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "提醒形式: ${prefs.remindMode.displayName}",
                                 fontSize = 12.sp,
-                                color = Color.Gray
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = if (prefs.isDualCycleEnabled) "🌿 小沁 + 🧘 大沁 智能交替" else "🌿 小沁 (微休息模式)",
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = GreenPrimary
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                             )
                         }
                     }
 
                     if (prefs.isDualCycleEnabled) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        Divider(color = Color(0xFFE0E0E0))
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         val currentCycleIndex = (completedCount % prefs.daQinCycleCount) + 1
                         val isNextDaQin = currentCycleIndex == prefs.daQinCycleCount
@@ -303,18 +355,18 @@ fun DashboardScreen(
                                 text = "交替进度：第 $currentCycleIndex / ${prefs.daQinCycleCount} 轮",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isNextDaQin) Color(0xFF0288D1) else Color(0xFF388E3C)
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                             )
                             Surface(
-                                color = if (isNextDaQin) Color(0xFFE1F5FE) else Color(0xFFE8F5E9),
-                                shape = RoundedCornerShape(12.dp)
+                                color = if (isNextDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue.copy(alpha = 0.2f) else com.qinmu.eyecare.ui.theme.SpotifyGreen.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(500.dp)
                             ) {
                                 Text(
                                     text = if (isNextDaQin) "下一次：🧘 大沁 (${prefs.daQinRestSeconds / 60}分钟)" else "下一次：🌿 小沁 (${prefs.restDurationSeconds}秒)",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isNextDaQin) Color(0xFF0288D1) else Color(0xFF2E7D32),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    color = if (isNextDaQin) com.qinmu.eyecare.ui.theme.SpotifyBlue else com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                 )
                             }
                         }
@@ -327,8 +379,8 @@ fun DashboardScreen(
             // 正确用眼距离常识卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Row(
                     modifier = Modifier
@@ -340,12 +392,12 @@ fun DashboardScreen(
                         text = "📐 视距建议：",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFF57F17)
+                        color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                     )
                     Text(
                         text = "📱 手机 33~40cm | 💻 电脑 50~70cm",
                         fontSize = 12.sp,
-                        color = Color(0xFFE65100)
+                        color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                     )
                 }
             }
@@ -355,8 +407,8 @@ fun DashboardScreen(
             // 护眼滤镜调节卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(
                     modifier = Modifier
@@ -372,18 +424,25 @@ fun DashboardScreen(
                             Icon(
                                 imageVector = Icons.Default.Info,
                                 contentDescription = null,
-                                tint = WarmOrange
+                                tint = com.qinmu.eyecare.ui.theme.SpotifyOrange
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "暖色护眼防蓝光滤镜",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                             )
                         }
                         Switch(
                             checked = prefs.isFilterEnabled,
-                            onCheckedChange = { viewModel.toggleFilter(it, context) }
+                            onCheckedChange = { viewModel.toggleFilter(it, context) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
                         )
                     }
 
@@ -392,12 +451,17 @@ fun DashboardScreen(
                         Text(
                             text = "滤镜不透明度: ${(prefs.filterAlpha * 100).toInt()}%",
                             fontSize = 13.sp,
-                            color = Color.Gray
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                         Slider(
                             value = prefs.filterAlpha,
                             onValueChange = { viewModel.updateFilterAlpha(it) },
-                            valueRange = 0.05f..0.6f
+                            valueRange = 0.05f..0.6f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                activeTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                inactiveTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
                         )
                     }
                 }

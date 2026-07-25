@@ -50,17 +50,21 @@ fun StatisticsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "📊 小沁/大沁护眼详细统计",
-                        fontWeight = FontWeight.Bold,
-                        color = GreenPrimary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "📊 小沁/大沁护眼详细统计",
+                            fontWeight = FontWeight.Bold,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                            fontSize = 18.sp
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
                 )
             )
-        }
+        },
+        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -69,7 +73,7 @@ fun StatisticsScreen(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // 1. 核心四大指标看板 (2x2 Grid)
             Row(
@@ -82,7 +86,7 @@ fun StatisticsScreen(
                     title = "小沁微休息",
                     value = "$totalXiaoQin 次",
                     subtitle = "20s 远眺放松",
-                    color = GreenPrimary
+                    color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
@@ -90,7 +94,7 @@ fun StatisticsScreen(
                     title = "大沁深度放松",
                     value = "$totalDaQin 次",
                     subtitle = "3-5min 伸展拉伸",
-                    color = Color(0xFF0288D1)
+                    color = com.qinmu.eyecare.ui.theme.SpotifyBlue
                 )
             }
 
@@ -106,7 +110,7 @@ fun StatisticsScreen(
                     title = "护眼休息总时长",
                     value = TimeUtils.formatSecondsToMS(totalRestSeconds.toInt()),
                     subtitle = "实际给眼睛放假",
-                    color = Color(0xFF00897B)
+                    color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
@@ -114,7 +118,7 @@ fun StatisticsScreen(
                     title = "护眼依从率",
                     value = "$complianceRate%",
                     subtitle = "跳过 $totalSkipCount 次",
-                    color = if (complianceRate >= 80) GreenPrimary else WarmOrange
+                    color = if (complianceRate >= 80) com.qinmu.eyecare.ui.theme.SpotifyGreen else com.qinmu.eyecare.ui.theme.SpotifyOrange
                 )
             }
 
@@ -124,14 +128,15 @@ fun StatisticsScreen(
             if (totalRestCount > 0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "小沁与大沁完成分布占比",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 15.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -141,45 +146,45 @@ fun StatisticsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(12.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFE0E0E0))
+                                .clip(RoundedCornerShape(500.dp))
+                                .background(com.qinmu.eyecare.ui.theme.SpotifyDarkControl)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .weight(xiaoRatio.coerceAtLeast(0.01f))
-                                    .background(GreenPrimary)
+                                    .background(com.qinmu.eyecare.ui.theme.SpotifyGreen)
                             )
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .weight((1f - xiaoRatio).coerceAtLeast(0.01f))
-                                    .background(Color(0xFF0288D1))
+                                    .background(com.qinmu.eyecare.ui.theme.SpotifyBlue)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).background(GreenPrimary, CircleShape))
+                                Box(modifier = Modifier.size(10.dp).background(com.qinmu.eyecare.ui.theme.SpotifyGreen, CircleShape))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "小沁 (微休息): $totalXiaoQin 次 (${(xiaoRatio * 100).toInt()}%)",
                                     fontSize = 11.sp,
-                                    color = Color.Gray
+                                    color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                                 )
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(10.dp).background(Color(0xFF0288D1), CircleShape))
+                                Box(modifier = Modifier.size(10.dp).background(com.qinmu.eyecare.ui.theme.SpotifyBlue, CircleShape))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "大沁 (深度): $totalDaQin 次 (${((1f - xiaoRatio) * 100).toInt()}%)",
                                     fontSize = 11.sp,
-                                    color = Color.Gray
+                                    color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                                 )
                             }
                         }
@@ -192,8 +197,8 @@ fun StatisticsScreen(
             // 3. 近7天用眼趋势 Canvas 柱状图
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(
                     modifier = Modifier
@@ -208,12 +213,13 @@ fun StatisticsScreen(
                         Text(
                             text = "近7天连屏使用时长 (分钟)",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 15.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                         )
                         Text(
-                            text = "近7天总连屏: ${totalScreenSeconds / 3600}小时 ${(totalScreenSeconds % 3600) / 60}分",
+                            text = "近7天: ${totalScreenSeconds / 3600}小时 ${(totalScreenSeconds % 3600) / 60}分",
                             fontSize = 11.sp,
-                            color = Color.Gray
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
                         )
                     }
 
@@ -226,7 +232,7 @@ fun StatisticsScreen(
                                 .height(160.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "暂无数据，服务开启后自动记录", color = Color.Gray, fontSize = 14.sp)
+                            Text(text = "暂无数据，服务开启后自动记录", color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted, fontSize = 13.sp)
                         }
                     } else {
                         WeeklyBarChart(logs = logs.reversed())
@@ -241,7 +247,7 @@ fun StatisticsScreen(
                 text = "📅 每日用眼与大小沁记录明细",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -249,7 +255,7 @@ fun StatisticsScreen(
                 Text(
                     text = "暂无历史统计日志",
                     fontSize = 13.sp,
-                    color = Color.Gray,
+                    color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted,
                     modifier = Modifier.padding(vertical = 12.dp)
                 )
             } else {
@@ -276,7 +282,7 @@ private fun StatCard(
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
     ) {
         Column(
             modifier = Modifier.padding(14.dp)
@@ -284,12 +290,12 @@ private fun StatCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = icon, fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = title, fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                Text(text = title, fontSize = 12.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = value, fontSize = 19.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(text = subtitle, fontSize = 10.sp, color = Color.Gray.copy(alpha = 0.8f))
+            Text(text = subtitle, fontSize = 10.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted)
         }
     }
 }
@@ -315,9 +321,17 @@ private fun WeeklyBarChart(logs: List<UsageLogEntity>) {
             val left = index * spacePerBar + (spacePerBar - barWidth) / 2
             val top = height - barHeight - 20.dp.toPx()
 
+            // 绘制底托
+            drawRoundRect(
+                color = Color(0xFF1F1F1F),
+                topLeft = Offset(left, 0f),
+                size = Size(barWidth, height - 20.dp.toPx()),
+                cornerRadius = CornerRadius(12f, 12f)
+            )
+
             // 绘制柱体
             drawRoundRect(
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 topLeft = Offset(left, top),
                 size = Size(barWidth, barHeight.coerceAtLeast(6.dp.toPx())),
                 cornerRadius = CornerRadius(12f, 12f)
@@ -333,8 +347,8 @@ private fun WeeklyBarChart(logs: List<UsageLogEntity>) {
             val dateLabel = if (item.date.length >= 5) item.date.substring(5) else item.date
             Text(
                 text = dateLabel,
-                fontSize = 10.sp,
-                color = Color.Gray,
+                fontSize = 11.sp,
+                color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
                 textAlign = TextAlign.Center
             )
         }
@@ -346,7 +360,7 @@ private fun DetailedLogItemRow(log: UsageLogEntity) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
     ) {
         Column(
             modifier = Modifier
@@ -358,12 +372,12 @@ private fun DetailedLogItemRow(log: UsageLogEntity) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = log.date, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(text = log.date, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary)
                 Text(
                     text = "屏幕使用: ${TimeUtils.formatSecondsToHMS(log.screenOnTimeSeconds)}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.DarkGray
+                    color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                 )
             }
 
@@ -375,54 +389,54 @@ private fun DetailedLogItemRow(log: UsageLogEntity) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    color = Color(0xFFE8F5E9),
-                    shape = RoundedCornerShape(8.dp)
+                    color = com.qinmu.eyecare.ui.theme.SpotifyGreen.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(500.dp)
                 ) {
                     Text(
                         text = "🌿 小沁 ${log.xiaoQinCount} 次",
                         fontSize = 11.sp,
-                        color = GreenPrimary,
-                        fontWeight = FontWeight.SemiBold,
+                        color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
                 Surface(
-                    color = Color(0xFFE1F5FE),
-                    shape = RoundedCornerShape(8.dp)
+                    color = com.qinmu.eyecare.ui.theme.SpotifyBlue.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(500.dp)
                 ) {
                     Text(
                         text = "🧘 大沁 ${log.daQinCount} 次",
                         fontSize = 11.sp,
-                        color = Color(0xFF0288D1),
-                        fontWeight = FontWeight.SemiBold,
+                        color = com.qinmu.eyecare.ui.theme.SpotifyBlue,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
                 Surface(
-                    color = Color(0xFFE0F2F1),
-                    shape = RoundedCornerShape(8.dp)
+                    color = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                    shape = RoundedCornerShape(500.dp)
                 ) {
                     Text(
                         text = "⏱️ 放假 ${TimeUtils.formatSecondsToMS(log.totalRestDurationSeconds.toInt())}",
                         fontSize = 11.sp,
-                        color = Color(0xFF00695C),
-                        fontWeight = FontWeight.SemiBold,
+                        color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
                 if (log.skipCount > 0) {
                     Surface(
-                        color = Color(0xFFFFF3E0),
-                        shape = RoundedCornerShape(8.dp)
+                        color = com.qinmu.eyecare.ui.theme.SpotifyOrange.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(500.dp)
                     ) {
                         Text(
                             text = "⚠️ 跳过 ${log.skipCount} 次",
                             fontSize = 11.sp,
-                            color = WarmOrange,
-                            fontWeight = FontWeight.SemiBold,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyOrange,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }

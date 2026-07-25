@@ -84,17 +84,21 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "⚙️ 偏好与系统权限设置",
-                        fontWeight = FontWeight.Bold,
-                        color = GreenPrimary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "⚙️ 偏好与系统权限设置",
+                            fontWeight = FontWeight.Bold,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                            fontSize = 18.sp
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
                 )
             )
-        }
+        },
+        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -103,24 +107,25 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // 1. 提醒模式选择区
             Text(
                 text = "护眼提醒模式选择",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     RemindMode.values().forEach { mode ->
+                        val isSelected = prefs.remindMode == mode
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -129,25 +134,30 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = prefs.remindMode == mode,
-                                onClick = { viewModel.setRemindMode(mode) }
+                                selected = isSelected,
+                                onClick = { viewModel.setRemindMode(mode) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    unselectedColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = mode.displayName,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 15.sp
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = if (isSelected) com.qinmu.eyecare.ui.theme.SpotifyTextPrimary else com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                                 )
                                 Text(
                                     text = mode.description,
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
                                 )
                             }
                         }
                         if (mode != RemindMode.values().last()) {
-                            Divider(color = Color(0xFFF0F0F0))
+                            Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         }
                     }
 
@@ -157,20 +167,20 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFFFF3E0), shape = RoundedCornerShape(8.dp))
+                            .background(com.qinmu.eyecare.ui.theme.SpotifyDarkControl, shape = RoundedCornerShape(500.dp))
                             .padding(10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
-                            tint = WarmOrange,
+                            tint = com.qinmu.eyecare.ui.theme.SpotifyOrange,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "提示：两种提醒模式均内嵌【跳过本次沁目】与【完成休息】按键",
                             fontSize = 11.sp,
-                            color = Color(0xFFE65100)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
                 }
@@ -183,18 +193,22 @@ fun SettingsScreen(
                 text = "💼 会议与 🎮 游戏智能免打扰",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // 手动模式选择
-                    Text(text = "手动模式锁定", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(
+                        text = "手动模式锁定",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
@@ -203,31 +217,53 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         SpecialMode.values().forEach { mode ->
+                            val isSelected = prefs.manualSpecialMode == mode
                             FilterChip(
-                                selected = prefs.manualSpecialMode == mode,
+                                selected = isSelected,
                                 onClick = { viewModel.setManualSpecialMode(mode) },
-                                label = { Text("${mode.iconRes} ${mode.displayName}") }
+                                shape = RoundedCornerShape(500.dp),
+                                label = { Text("${mode.iconRes} ${mode.displayName}") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    selectedLabelColor = Color.Black,
+                                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                    labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // 自动识别开关
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "💼 自动识别会议应用 (免打扰)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text(text = "自动检测腾讯会议、钉钉、Zoom、Teams等前台运行", fontSize = 11.sp, color = Color.Gray)
+                            Text(
+                                text = "💼 自动识别会议应用 (免打扰)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                            )
+                            Text(
+                                text = "自动检测腾讯会议、钉钉、Zoom、Teams等前台运行",
+                                fontSize = 11.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
+                            )
                         }
                         Switch(
                             checked = prefs.isAutoMeetingModeEnabled,
-                            onCheckedChange = { viewModel.setAutoMeetingModeEnabled(it) }
+                            onCheckedChange = { viewModel.setAutoMeetingModeEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
                         )
                     }
 
@@ -239,12 +275,27 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "🎮 自动识别游戏应用 (免打扰)", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text(text = "前台运行全屏游戏时，绝对挂起全屏遮罩与响铃", fontSize = 11.sp, color = Color.Gray)
+                            Text(
+                                text = "🎮 自动识别游戏应用 (免打扰)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                            )
+                            Text(
+                                text = "前台运行全屏游戏时，绝对挂起全屏遮罩与响铃",
+                                fontSize = 11.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
+                            )
                         }
                         Switch(
                             checked = prefs.isAutoGameModeEnabled,
-                            onCheckedChange = { viewModel.setAutoGameModeEnabled(it) }
+                            onCheckedChange = { viewModel.setAutoGameModeEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
                         )
                     }
                 }
@@ -257,17 +308,18 @@ fun SettingsScreen(
                 text = "提醒提示音效",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     RestSoundEffect.values().forEach { sound ->
+                        val isSelected = prefs.soundEffect == sound
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -283,7 +335,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = prefs.soundEffect == sound,
+                                selected = isSelected,
                                 onClick = {
                                     if (sound == RestSoundEffect.CUSTOM_AUDIO) {
                                         audioPickerLauncher.launch("audio/*")
@@ -291,28 +343,40 @@ fun SettingsScreen(
                                         viewModel.setSoundEffect(sound)
                                         SoundManager.playSound(context, sound)
                                     }
-                                }
+                                },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    unselectedColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = sound.displayName,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
+                                color = if (isSelected) com.qinmu.eyecare.ui.theme.SpotifyTextPrimary else com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
                                 modifier = Modifier.weight(1f)
                             )
                             if (sound == RestSoundEffect.CUSTOM_AUDIO) {
                                 OutlinedButton(
                                     onClick = { audioPickerLauncher.launch("audio/*") },
-                                    shape = RoundedCornerShape(16.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    shape = RoundedCornerShape(500.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = com.qinmu.eyecare.ui.theme.SpotifyGreen
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, com.qinmu.eyecare.ui.theme.SpotifyGreen),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                                 ) {
                                     Icon(imageVector = Icons.Default.MusicNote, contentDescription = null, modifier = Modifier.size(14.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("选择MP3截取", fontSize = 11.sp)
+                                    Text("选择MP3截取", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             } else if (sound != RestSoundEffect.MUTE) {
                                 TextButton(
-                                    onClick = { SoundManager.playSound(context, sound) }
+                                    onClick = { SoundManager.playSound(context, sound) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = com.qinmu.eyecare.ui.theme.SpotifyGreen
+                                    )
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
@@ -320,12 +384,12 @@ fun SettingsScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("试听", fontSize = 12.sp)
+                                    Text("试听", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
                         if (sound != RestSoundEffect.values().last()) {
-                            Divider(color = Color(0xFFF0F0F0))
+                            Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         }
                     }
                 }
@@ -342,14 +406,14 @@ fun SettingsScreen(
                 text = "小沁/大沁提醒周期与规则配置",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // 小大沁交替模式总开关
@@ -362,49 +426,66 @@ fun SettingsScreen(
                             Text(
                                 text = "开启【小沁 + 大沁】智能交替守护",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
+                                fontSize = 15.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
                             )
                             Text(
                                 text = "连续完成数次【小沁】微休息后，下一次自动升级为【大沁】深度放松",
                                 fontSize = 11.sp,
-                                color = Color.Gray
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
                             )
                         }
                         Switch(
                             checked = prefs.isDualCycleEnabled,
-                            onCheckedChange = { viewModel.setDualCycleEnabled(it) }
+                            onCheckedChange = { viewModel.setDualCycleEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
                         )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "1. 🌿 小沁（微休息）配置",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = GreenPrimary
+                        color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(text = "连屏提醒间隔", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "连屏提醒间隔", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(15, 20, 30, 45).forEach { minutes ->
+                            val isSelected = prefs.remindIntervalMinutes == minutes
                             FilterChip(
-                                selected = prefs.remindIntervalMinutes == minutes,
+                                selected = isSelected,
                                 onClick = {
                                     viewModel.setRemindInterval(minutes)
                                     customIntervalText = minutes.toString()
                                 },
-                                label = { Text("${minutes}分钟") }
+                                shape = RoundedCornerShape(500.dp),
+                                label = { Text("${minutes}分钟") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    selectedLabelColor = Color.Black,
+                                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                    labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = customIntervalText,
@@ -415,10 +496,19 @@ fun SettingsScreen(
                                 viewModel.setRemindInterval(min)
                             }
                         },
-                        label = { Text("自定义小沁间隔 (分钟)") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        trailingIcon = { Text("分钟", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
+                        label = { Text("自定义小沁间隔 (分钟)", color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary) },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = com.qinmu.eyecare.ui.theme.SpotifyGreen) },
+                        trailingIcon = { Text("分钟", fontSize = 12.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted, modifier = Modifier.padding(end = 12.dp)) },
                         singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                            unfocusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                            focusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                            unfocusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyBorder,
+                            focusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                            unfocusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done
@@ -427,25 +517,35 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "小沁休息时长 (远眺)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(text = "小沁休息时长 (远眺)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         listOf(15, 20, 30, 45).forEach { seconds ->
+                            val isSelected = prefs.restDurationSeconds == seconds
                             FilterChip(
-                                selected = prefs.restDurationSeconds == seconds,
+                                selected = isSelected,
                                 onClick = {
                                     viewModel.setRestDuration(seconds)
                                     customRestText = seconds.toString()
                                 },
-                                label = { Text("${seconds}秒") }
+                                shape = RoundedCornerShape(500.dp),
+                                label = { Text("${seconds}秒") },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                    selectedLabelColor = Color.Black,
+                                    containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                    labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                )
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = customRestText,
@@ -456,10 +556,19 @@ fun SettingsScreen(
                                 viewModel.setRestDuration(sec)
                             }
                         },
-                        label = { Text("自定义小沁时长 (秒)") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        trailingIcon = { Text("秒", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
+                        label = { Text("自定义小沁时长 (秒)", color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary) },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = com.qinmu.eyecare.ui.theme.SpotifyGreen) },
+                        trailingIcon = { Text("秒", fontSize = 12.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted, modifier = Modifier.padding(end = 12.dp)) },
                         singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                            unfocusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                            focusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                            unfocusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyBorder,
+                            focusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                            unfocusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done
@@ -470,35 +579,43 @@ fun SettingsScreen(
 
                     if (prefs.isDualCycleEnabled) {
                         Spacer(modifier = Modifier.height(20.dp))
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
                             text = "2. 🧘 大沁（深度放松）规则配置",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = Color(0xFF0288D1)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyBlue
                         )
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text(text = "触发频次 (完成几项小沁后触发大沁)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "触发频次 (完成几项小沁后触发大沁)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             listOf(2, 3, 4, 5).forEach { count ->
+                                val isSelected = prefs.daQinCycleCount == count
                                 FilterChip(
-                                    selected = prefs.daQinCycleCount == count,
+                                    selected = isSelected,
                                     onClick = { viewModel.setDaQinCycleCount(count) },
-                                    label = { Text("每 ${count} 次小沁") }
+                                    shape = RoundedCornerShape(500.dp),
+                                    label = { Text("每 ${count} 次小沁") },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyBlue,
+                                        selectedLabelColor = Color.Black,
+                                        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                        labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                    )
                                 )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(text = "大沁休息时长 (深度全身放松)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "大沁休息时长 (深度全身放松)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -506,16 +623,26 @@ fun SettingsScreen(
                         ) {
                             listOf(120, 180, 300, 600).forEach { seconds ->
                                 val min = seconds / 60
+                                val isSelected = prefs.daQinRestSeconds == seconds
                                 FilterChip(
-                                    selected = prefs.daQinRestSeconds == seconds,
+                                    selected = isSelected,
                                     onClick = {
                                         viewModel.setDaQinRestSeconds(seconds)
                                         customDaQinRestText = seconds.toString()
                                     },
-                                    label = { Text("${min}分钟") }
+                                    shape = RoundedCornerShape(500.dp),
+                                    label = { Text("${min}分钟") },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyBlue,
+                                        selectedLabelColor = Color.Black,
+                                        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                        labelColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                                    )
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         OutlinedTextField(
                             value = customDaQinRestText,
@@ -526,10 +653,19 @@ fun SettingsScreen(
                                     viewModel.setDaQinRestSeconds(sec)
                                 }
                             },
-                            label = { Text("自定义大沁时长 (秒)") },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                            trailingIcon = { Text("秒", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(end = 12.dp)) },
+                            label = { Text("自定义大沁时长 (秒)", color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary) },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = com.qinmu.eyecare.ui.theme.SpotifyBlue) },
+                            trailingIcon = { Text("秒", fontSize = 12.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted, modifier = Modifier.padding(end = 12.dp)) },
                             singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                unfocusedContainerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                focusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyBlue,
+                                unfocusedBorderColor = com.qinmu.eyecare.ui.theme.SpotifyBorder,
+                                focusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary,
+                                unfocusedTextColor = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Done
@@ -548,14 +684,14 @@ fun SettingsScreen(
                 text = "📐 电子设备正确视距与护眼常识",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -563,12 +699,12 @@ fun SettingsScreen(
                             text = "📱 手机 / 平板视距：",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color(0xFF33691E)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                         )
                         Text(
                             text = "33 ~ 40 cm (约一臂折半)",
                             fontSize = 13.sp,
-                            color = Color(0xFF1B5E20)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
@@ -577,12 +713,12 @@ fun SettingsScreen(
                             text = "💻 电脑显示屏视距：",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color(0xFF33691E)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                         )
                         Text(
                             text = "50 ~ 70 cm (约手臂伸直长度)",
                             fontSize = 13.sp,
-                            color = Color(0xFF1B5E20)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
@@ -591,12 +727,12 @@ fun SettingsScreen(
                             text = "👀 视线倾角建议：",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Color(0xFF33691E)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyGreen
                         )
                         Text(
                             text = "屏幕中心向下倾斜 10° - 15°",
                             fontSize = 13.sp,
-                            color = Color(0xFF1B5E20)
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
                 }
@@ -609,14 +745,14 @@ fun SettingsScreen(
                 text = "关于与应用更新",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -634,26 +770,26 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = null,
-                            tint = GreenPrimary
+                            tint = com.qinmu.eyecare.ui.theme.SpotifyGreen
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "检查新版本", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text(text = "当前版本 v1.0.0", fontSize = 11.sp, color = Color.Gray)
+                            Text(text = "检查新版本", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary)
+                            Text(text = "当前版本 v1.0.0", fontSize = 11.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted)
                         }
                         if (isCheckingUpdate) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = com.qinmu.eyecare.ui.theme.SpotifyGreen)
                         } else {
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
                                 contentDescription = null,
-                                tint = Color.Gray
+                                tint = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
                             )
                         }
                     }
@@ -667,14 +803,14 @@ fun SettingsScreen(
                 text = "系统权限状态",
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = GreenPrimary,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     PermissionItem(
@@ -687,7 +823,7 @@ fun SettingsScreen(
                         }
                     )
 
-                    Divider(color = Color(0xFFF0F0F0))
+                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
 
                     PermissionItem(
                         title = "应用使用情况 (Usage Stats) 权限",
@@ -756,29 +892,36 @@ private fun PermissionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.Security,
             contentDescription = null,
-            tint = if (isGranted) GreenPrimary else WarmOrange
+            tint = if (isGranted) com.qinmu.eyecare.ui.theme.SpotifyGreen else com.qinmu.eyecare.ui.theme.SpotifyOrange
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Text(text = desc, fontSize = 11.sp, color = Color.Gray)
+            Text(text = title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary)
+            Text(text = desc, fontSize = 11.sp, color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted)
         }
-        Text(
-            text = if (isGranted) "已授权" else "去授权",
-            fontSize = 12.sp,
-            color = if (isGranted) GreenPrimary else WarmOrange,
-            fontWeight = FontWeight.Bold
-        )
+        Surface(
+            color = if (isGranted) com.qinmu.eyecare.ui.theme.SpotifyGreen.copy(alpha = 0.15f) else com.qinmu.eyecare.ui.theme.SpotifyOrange.copy(alpha = 0.15f),
+            shape = RoundedCornerShape(500.dp)
+        ) {
+            Text(
+                text = if (isGranted) "已授权" else "去授权",
+                fontSize = 11.sp,
+                color = if (isGranted) com.qinmu.eyecare.ui.theme.SpotifyGreen else com.qinmu.eyecare.ui.theme.SpotifyOrange,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = Color.Gray
+            tint = com.qinmu.eyecare.ui.theme.SpotifyTextMuted
         )
     }
 }
