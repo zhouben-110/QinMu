@@ -10,7 +10,6 @@ import com.qinmu.eyecare.QinMuApplication
 import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.data.model.UserPreferences
 import com.qinmu.eyecare.service.EyeProtectionService
-import com.qinmu.eyecare.service.FilterOverlayService
 import com.qinmu.eyecare.util.PermissionUtils
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,33 +49,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    fun toggleFilter(enabled: Boolean, context: Context) {
-        viewModelScope.launch {
-            if (enabled && !PermissionUtils.hasOverlayPermission(context)) {
-                PermissionUtils.requestOverlayPermission(context)
-                return@launch
-            }
-            repository.updateFilterEnabled(enabled)
-            try {
-                val intent = Intent(context, FilterOverlayService::class.java)
-                if (enabled) {
-                    context.startService(intent)
-                } else {
-                    context.stopService(intent)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    fun updateFilterAlpha(alpha: Float) {
-        viewModelScope.launch {
-            val current = userPreferences.value
-            repository.updateFilterSettings(current.filterColorArgb, alpha)
         }
     }
 

@@ -102,6 +102,11 @@ class EyeProtectionService : Service() {
             try {
                 QinMuApplication.instance.preferencesRepository.userPreferencesFlow.collect { prefs ->
                     currentPreferences = prefs
+                    if (prefs.isKeepAliveEnabled) {
+                        KeepAliveWorker.scheduleKeepAliveWork(this@EyeProtectionService)
+                    } else {
+                        KeepAliveWorker.cancelKeepAliveWork(this@EyeProtectionService)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -347,7 +352,10 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
-        SoundManager.stopSound()
+
+        // 休息完成时播放与开始时一致的提示音效
+        SoundManager.playSound(this, currentPreferences.soundEffect)
+
         cancelRemindNotification()
         dismissOverlayWindow()
 

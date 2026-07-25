@@ -157,7 +157,7 @@ fun SettingsScreen(
                             }
                         }
                         if (mode != RemindMode.values().last()) {
-                            Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                            HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         }
                     }
 
@@ -234,7 +234,7 @@ fun SettingsScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                    HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -389,7 +389,7 @@ fun SettingsScreen(
                             }
                         }
                         if (sound != RestSoundEffect.values().last()) {
-                            Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                            HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         }
                     }
                 }
@@ -448,7 +448,7 @@ fun SettingsScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                    HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
@@ -579,7 +579,7 @@ fun SettingsScreen(
 
                     if (prefs.isDualCycleEnabled) {
                         Spacer(modifier = Modifier.height(20.dp))
-                        Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                        HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
@@ -823,7 +823,7 @@ fun SettingsScreen(
                         }
                     )
 
-                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                    HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
 
                     PermissionItem(
                         title = "应用使用情况 (Usage Stats) 权限",
@@ -834,6 +834,58 @@ fun SettingsScreen(
                             hasUsagePermission = PermissionUtils.hasUsageStatsPermission(context)
                         }
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 6. 后台防杀与心跳巡检
+            Text(
+                text = "后台防杀与心跳巡检",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "15分钟后台周期性保活巡检 (WorkManager)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "开启后每15分钟触发一次后台静默检查，若前台护眼服务被系统意外杀死将尝试重新唤醒拉起服务",
+                                fontSize = 11.sp,
+                                color = com.qinmu.eyecare.ui.theme.SpotifyTextMuted,
+                                lineHeight = 15.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Switch(
+                            checked = prefs.isKeepAliveEnabled,
+                            onCheckedChange = { viewModel.setKeepAliveEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
+                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
+                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
+                            )
+                        )
+                    }
                 }
             }
 

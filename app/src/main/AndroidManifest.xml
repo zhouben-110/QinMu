@@ -67,12 +67,6 @@
             android:enabled="true"
             android:exported="false" />
 
-        <!-- 护眼滤镜悬浮窗服务 -->
-        <service
-            android:name=".service.FilterOverlayService"
-            android:enabled="true"
-            android:exported="false" />
-
         <!-- 开机启动接收器 -->
         <receiver
             android:name=".service.receiver.ScreenStateReceiver"

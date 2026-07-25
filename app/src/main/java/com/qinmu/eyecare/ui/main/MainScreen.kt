@@ -30,6 +30,7 @@ fun MainScreen() {
     )
 
     Scaffold(
+        containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkBase,
         bottomBar = {
             NavigationBar(
                 containerColor = com.qinmu.eyecare.ui.theme.SpotifyDarkSurface,

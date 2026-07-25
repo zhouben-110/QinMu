@@ -86,4 +86,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.updateAutoMeetingModeEnabled(enabled)
         }
     }
+
+    fun setKeepAliveEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateKeepAliveEnabled(enabled)
+            if (enabled) {
+                com.qinmu.eyecare.service.KeepAliveWorker.scheduleKeepAliveWork(getApplication())
+            } else {
+                com.qinmu.eyecare.service.KeepAliveWorker.cancelKeepAliveWork(getApplication())
+            }
+        }
+    }
 }

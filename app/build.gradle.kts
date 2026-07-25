@@ -68,6 +68,9 @@ dependencies {
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    // WorkManager (Keep-alive worker)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // Room Database
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

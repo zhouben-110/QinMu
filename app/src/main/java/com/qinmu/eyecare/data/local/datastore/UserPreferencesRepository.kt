@@ -32,9 +32,7 @@ class UserPreferencesRepository(private val context: Context) {
         val IS_AUTO_MEETING_MODE_ENABLED = booleanPreferencesKey("is_auto_meeting_mode_enabled")
         val REMIND_MODE = stringPreferencesKey("remind_mode")
         val SOUND_EFFECT = stringPreferencesKey("sound_effect")
-        val IS_FILTER_ENABLED = booleanPreferencesKey("is_filter_enabled")
-        val FILTER_COLOR_ARGB = longPreferencesKey("filter_color_argb")
-        val FILTER_ALPHA = floatPreferencesKey("filter_alpha")
+        val IS_KEEP_ALIVE_ENABLED = booleanPreferencesKey("is_keep_alive_enabled")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -68,9 +66,7 @@ class UserPreferencesRepository(private val context: Context) {
             RestSoundEffect.SYSTEM_NOTIFICATION
         }
 
-        val filterEnabled = prefs[PreferenceKeys.IS_FILTER_ENABLED] ?: false
-        val colorArgb = prefs[PreferenceKeys.FILTER_COLOR_ARGB] ?: 0x33FFB74D
-        val alpha = prefs[PreferenceKeys.FILTER_ALPHA] ?: 0.2f
+        val isKeepAlive = prefs[PreferenceKeys.IS_KEEP_ALIVE_ENABLED] ?: true
 
         UserPreferences(
             remindIntervalMinutes = interval,
@@ -83,9 +79,7 @@ class UserPreferencesRepository(private val context: Context) {
             isAutoMeetingModeEnabled = autoMeeting,
             remindMode = mode,
             soundEffect = sound,
-            isFilterEnabled = filterEnabled,
-            filterColorArgb = colorArgb,
-            filterAlpha = alpha
+            isKeepAliveEnabled = isKeepAlive
         )
     }
 
@@ -149,16 +143,9 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun updateFilterEnabled(enabled: Boolean) {
+    suspend fun updateKeepAliveEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
-            prefs[PreferenceKeys.IS_FILTER_ENABLED] = enabled
-        }
-    }
-
-    suspend fun updateFilterSettings(colorArgb: Long, alpha: Float) {
-        context.dataStore.edit { prefs ->
-            prefs[PreferenceKeys.FILTER_COLOR_ARGB] = colorArgb
-            prefs[PreferenceKeys.FILTER_ALPHA] = alpha
+            prefs[PreferenceKeys.IS_KEEP_ALIVE_ENABLED] = enabled
         }
     }
 }

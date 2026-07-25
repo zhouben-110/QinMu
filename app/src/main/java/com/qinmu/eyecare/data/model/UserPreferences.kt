@@ -25,8 +25,6 @@ data class UserPreferences(
     val isAutoMeetingModeEnabled: Boolean = true, // 是否开启自动检测会议进入免打扰
     val remindMode: RemindMode = RemindMode.NOTIFICATION, // 默认温馨通知
     val soundEffect: RestSoundEffect = RestSoundEffect.SYSTEM_NOTIFICATION, // 提醒音效
-    val isFilterEnabled: Boolean = false, // 护眼滤镜开关
-    val filterColorArgb: Long = 0x33FFB74D, // 默认暖橙滤镜色值
-    val filterAlpha: Float = 0.2f // 滤镜不透明度
+    val isKeepAliveEnabled: Boolean = true // 是否开启后台 WorkManager 周期性保活巡检开关
 )
 

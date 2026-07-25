@@ -100,10 +100,15 @@ class RestOverlayWindow(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             layoutParamsType,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
         }
 
         lifecycleOwner = OverlayLifecycleOwner().apply {
@@ -327,7 +332,7 @@ private fun RestOverlayContent(
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                    HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(

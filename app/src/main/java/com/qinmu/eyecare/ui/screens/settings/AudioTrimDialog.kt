@@ -28,7 +28,6 @@ fun AudioTrimDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
 
     val totalDurationSec = remember(audioUri) {
         AudioTrimUtils.getAudioDurationSeconds(context, audioUri).coerceAtLeast(3)

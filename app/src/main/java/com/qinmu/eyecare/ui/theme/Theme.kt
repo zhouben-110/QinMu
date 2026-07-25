@@ -27,6 +27,7 @@ private val DarkColorScheme = darkColorScheme(
     onError = Color.Black
 )
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun QinMuTheme(
     darkTheme: Boolean = true, // 强制统一使用 Spotify 暗亮黑精致系统主题

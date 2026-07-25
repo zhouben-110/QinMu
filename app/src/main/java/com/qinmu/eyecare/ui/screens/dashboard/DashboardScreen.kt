@@ -340,7 +340,7 @@ fun DashboardScreen(
 
                     if (prefs.isDualCycleEnabled) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        Divider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
+                        HorizontalDivider(color = com.qinmu.eyecare.ui.theme.SpotifyBorder)
                         Spacer(modifier = Modifier.height(12.dp))
 
                         val currentCycleIndex = (completedCount % prefs.daQinCycleCount) + 1
@@ -404,7 +404,7 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 护眼滤镜调节卡片
+            // 电子设备最佳护眼色温建议卡片
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -415,57 +415,78 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "💡 电子设备最佳护眼色温建议",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = com.qinmu.eyecare.ui.theme.SpotifyGreen
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 📱 手机配置
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                tint = com.qinmu.eyecare.ui.theme.SpotifyOrange
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "暖色护眼防蓝光滤镜",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
-                            )
-                        }
-                        Switch(
-                            checked = prefs.isFilterEnabled,
-                            onCheckedChange = { viewModel.toggleFilter(it, context) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.Black,
-                                checkedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
-                                uncheckedThumbColor = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary,
-                                uncheckedTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
-                            )
+                        Text(
+                            text = "📱 手机端（系统护眼模式）",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "• 最佳色温：3500K ~ 4500K (暖白~暖黄)",
+                            fontSize = 12.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
+                        )
+                        Text(
+                            text = "• 推荐强度/比率：40% ~ 50%",
+                            fontSize = 12.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
 
-                    if (prefs.isFilterEnabled) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // 💻 电脑配置
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = com.qinmu.eyecare.ui.theme.SpotifyDarkControl,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
                         Text(
-                            text = "滤镜不透明度: ${(prefs.filterAlpha * 100).toInt()}%",
+                            text = "💻 电脑端（显示器 / 夜间模式）",
+                            fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "• 日间工作：4500K ~ 5000K (比率 30%)",
+                            fontSize = 12.sp,
                             color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
-                        Slider(
-                            value = prefs.filterAlpha,
-                            onValueChange = { viewModel.updateFilterAlpha(it) },
-                            valueRange = 0.05f..0.6f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
-                                activeTrackColor = com.qinmu.eyecare.ui.theme.SpotifyGreen,
-                                inactiveTrackColor = com.qinmu.eyecare.ui.theme.SpotifyDarkControl
-                            )
+                        Text(
+                            text = "• 夜间加班：3400K ~ 4000K (比率 50%)",
+                            fontSize = 12.sp,
+                            color = com.qinmu.eyecare.ui.theme.SpotifyTextSecondary
                         )
                     }
                 }
             }
+
+
 
             Spacer(modifier = Modifier.height(24.dp))
         }
