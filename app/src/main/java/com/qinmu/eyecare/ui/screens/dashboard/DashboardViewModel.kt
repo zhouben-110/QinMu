@@ -37,6 +37,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun setRemindInterval(minutes: Int) {
+        viewModelScope.launch {
+            repository.updateRemindInterval(minutes)
+        }
+    }
+
     fun startService(context: Context) {
         try {
             val intent = Intent(context, EyeProtectionService::class.java).apply {
