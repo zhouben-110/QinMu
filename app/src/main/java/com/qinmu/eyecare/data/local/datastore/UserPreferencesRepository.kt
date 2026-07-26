@@ -33,6 +33,8 @@ class UserPreferencesRepository(private val context: Context) {
         val REMIND_MODE = stringPreferencesKey("remind_mode")
         val SOUND_EFFECT = stringPreferencesKey("sound_effect")
         val IS_KEEP_ALIVE_ENABLED = booleanPreferencesKey("is_keep_alive_enabled")
+        val XIAO_QIN_BG_URI = stringPreferencesKey("xiao_qin_bg_uri")
+        val DA_QIN_BG_URI = stringPreferencesKey("da_qin_bg_uri")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -67,6 +69,8 @@ class UserPreferencesRepository(private val context: Context) {
         }
 
         val isKeepAlive = prefs[PreferenceKeys.IS_KEEP_ALIVE_ENABLED] ?: true
+        val xiaoQinBg = prefs[PreferenceKeys.XIAO_QIN_BG_URI]
+        val daQinBg = prefs[PreferenceKeys.DA_QIN_BG_URI]
 
         UserPreferences(
             remindIntervalMinutes = interval,
@@ -79,7 +83,9 @@ class UserPreferencesRepository(private val context: Context) {
             isAutoMeetingModeEnabled = autoMeeting,
             remindMode = mode,
             soundEffect = sound,
-            isKeepAliveEnabled = isKeepAlive
+            isKeepAliveEnabled = isKeepAlive,
+            xiaoQinBgUri = xiaoQinBg,
+            daQinBgUri = daQinBg
         )
     }
 
@@ -146,6 +152,26 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun updateKeepAliveEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[PreferenceKeys.IS_KEEP_ALIVE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateXiaoQinBgUri(path: String?) {
+        context.dataStore.edit { prefs ->
+            if (path != null) {
+                prefs[PreferenceKeys.XIAO_QIN_BG_URI] = path
+            } else {
+                prefs.remove(PreferenceKeys.XIAO_QIN_BG_URI)
+            }
+        }
+    }
+
+    suspend fun updateDaQinBgUri(path: String?) {
+        context.dataStore.edit { prefs ->
+            if (path != null) {
+                prefs[PreferenceKeys.DA_QIN_BG_URI] = path
+            } else {
+                prefs.remove(PreferenceKeys.DA_QIN_BG_URI)
+            }
         }
     }
 }

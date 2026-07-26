@@ -28,10 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qinmu.eyecare.data.model.SpecialMode
+import com.qinmu.eyecare.ui.components.QinMuEmoji
 import com.qinmu.eyecare.ui.theme.*
 import com.qinmu.eyecare.util.TimeUtils
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel()
@@ -91,8 +92,10 @@ fun DashboardScreen(
                     letterSpacing = 0.5.sp
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    QinMuEmoji(symbol = "🌿", size = 20.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "🌿 沁目 · 智能护眼",
+                        text = "沁目 · 智能护眼",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = AccentRoyalBlue
@@ -236,25 +239,30 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.width(12.dp))
 
             // 2. Figma Music Disc Vinyl Disc & Concentric Progress Gauge (Right Side)
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
+                // 🌟 动态自适应宽高计算：根据屏幕真实剩余宽度自动缩放，并强制 1:1 宽高比，决不发生椭圆挤压变形 🌟
+                val discSize = minOf(maxWidth, maxHeight, 260.dp)
+                val innerDiscSize = discSize * 0.71f
+
                 // Large Outer Neumorphic Disc Surface
                 Box(
                     modifier = Modifier
-                        .size(280.dp)
-                        .neumorphicShadow(cornerRadius = 140.dp, elevation = 10.dp)
+                        .size(discSize)
+                        .aspectRatio(1f)
+                        .neumorphicShadow(cornerRadius = discSize / 2, elevation = 10.dp)
                         .clip(CircleShape)
                         .background(NeumorphicSurface)
                         .border(2.dp, Color.White.copy(alpha = 0.9f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     // Canvas Draw Arc Progress Ring (Coral Red progress ring from Figma)
-                    Canvas(modifier = Modifier.fillMaxSize().padding(14.dp)) {
-                        val strokeWidth = 14.dp.toPx()
+                    Canvas(modifier = Modifier.fillMaxSize().padding(discSize * 0.05f)) {
+                        val strokeWidth = (discSize * 0.05f).toPx()
                         // Track ring
                         drawArc(
                             color = Color(0xFFCBE3F0),
@@ -282,7 +290,8 @@ fun DashboardScreen(
                     // Inner Vinyl Disc Container
                     Box(
                         modifier = Modifier
-                            .size(200.dp)
+                            .size(innerDiscSize)
+                            .aspectRatio(1f)
                             .clip(CircleShape)
                             .background(
                                 Brush.radialGradient(
@@ -327,14 +336,14 @@ fun DashboardScreen(
                         ) {
                             Text(
                                 text = TimeUtils.formatSecondsToHMS(currentSeconds),
-                                fontSize = 30.sp,
+                                fontSize = if (discSize < 220.dp) 24.sp else 30.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "目标: ${prefs.remindIntervalMinutes} 分钟",
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 color = Color(0xFFB1D6EA)
                             )
                         }
@@ -395,7 +404,8 @@ fun DashboardScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("🌿", fontSize = 32.sp)
+                            QinMuEmoji(symbol = "🌿", size = 44.dp)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text("Pop Playlist", fontWeight = FontWeight.ExtraBold, color = Color(0xFF4A154B), fontSize = 15.sp)
                         }
                     }
@@ -448,7 +458,8 @@ fun DashboardScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("🧘", fontSize = 32.sp)
+                            QinMuEmoji(symbol = "🧘", size = 44.dp)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text("Top Beats", fontWeight = FontWeight.ExtraBold, color = Color(0xFF0F3460), fontSize = 15.sp)
                         }
                     }
@@ -519,9 +530,10 @@ fun DashboardScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SpecialMode.values().forEach { mode ->
                         val isSelected = prefs.manualSpecialMode == mode
@@ -529,7 +541,13 @@ fun DashboardScreen(
                             selected = isSelected,
                             onClick = { viewModel.setManualSpecialMode(mode) },
                             shape = RoundedCornerShape(500.dp),
-                            label = { Text("${mode.iconRes} ${mode.displayName}") },
+                            label = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    QinMuEmoji(symbol = mode.iconRes, size = 18.dp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(mode.displayName)
+                                }
+                            },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = AccentRoyalBlue,
                                 selectedLabelColor = Color.White,
@@ -579,19 +597,7 @@ fun DashboardScreen(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(AccentRoyalBlue, AccentSoftSky)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("👀", fontSize = 20.sp)
-                }
+                QinMuEmoji(symbol = "👀", size = 36.dp)
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -623,19 +629,7 @@ fun DashboardScreen(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(AccentWarmOrange, Color(0xFFFFD166))
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("💡", fontSize = 20.sp)
-                }
+                QinMuEmoji(symbol = "💡", size = 36.dp)
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(

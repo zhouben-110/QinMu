@@ -33,7 +33,14 @@ class KeepAliveWorker(
         const val WORK_NAME = "qinmu_keep_alive_work"
 
         fun scheduleKeepAliveWork(context: Context) {
-            val request = PeriodicWorkRequestBuilder<KeepAliveWorker>(15, TimeUnit.MINUTES).build()
+            val constraints = androidx.work.Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .build()
+
+            val request = PeriodicWorkRequestBuilder<KeepAliveWorker>(15, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .build()
+
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,

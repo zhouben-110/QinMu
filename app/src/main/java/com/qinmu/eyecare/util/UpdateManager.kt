@@ -48,7 +48,7 @@ object UpdateManager {
                     if (remoteVersionCode > currentVersionCode) {
                         val info = UpdateInfo(
                             versionCode = remoteVersionCode,
-                            versionName = json.optString("versionName", "1.0.0"),
+                            versionName = json.optString("versionName", "2.0.0"),
                             updateTitle = json.optString("updateTitle", "发现新版本"),
                             updateContent = json.optString("updateContent", "优化了应用体验"),
                             downloadUrl = json.getString("downloadUrl"),

@@ -4,9 +4,14 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -31,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qinmu.eyecare.data.model.RemindMode
 import com.qinmu.eyecare.data.model.RestSoundEffect
 import com.qinmu.eyecare.data.model.SpecialMode
+import com.qinmu.eyecare.ui.components.QinMuEmoji
 import com.qinmu.eyecare.ui.screens.dashboard.UpdateDialog
 import com.qinmu.eyecare.ui.theme.*
 import com.qinmu.eyecare.util.AudioTrimUtils
@@ -40,7 +46,7 @@ import com.qinmu.eyecare.util.UpdateInfo
 import com.qinmu.eyecare.util.UpdateManager
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
@@ -66,6 +72,22 @@ fun SettingsScreen(
         }
     }
 
+    val xiaoQinBgPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.saveXiaoQinBackground(context, uri)
+        }
+    }
+
+    val daQinBgPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.saveDaQinBackground(context, uri)
+        }
+    }
+
     var customIntervalText by remember(prefs.remindIntervalMinutes) {
         mutableStateOf(prefs.remindIntervalMinutes.toString())
     }
@@ -85,12 +107,16 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Title Header
-        Text(
-            text = "⚙️ 偏好与系统权限设置",
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 24.sp,
-            color = TextPrimaryDarkNavy
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "⚙️", size = 26.dp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "偏好与系统权限设置",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 24.sp,
+                color = TextPrimaryDarkNavy
+            )
+        }
         Text(
             text = "定制专属您的极简护眼习惯、声音与保活规则",
             fontSize = 13.sp,
@@ -180,15 +206,244 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         // =========================================================================
+        // 2. 遮罩背景相册自定义 (小沁 & 大沁)
+        // =========================================================================
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "🖼️", size = 20.dp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "全屏遮罩背景相册自定义 (小沁 & 大沁)",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = AccentRoyalBlue
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        NeumorphicCard(
+            modifier = Modifier.fillMaxWidth(),
+            cornerRadius = 20.dp
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "支持从您的系统相册自选壁纸作为小沁与大沁的全屏遮罩背景，配合半透明液态玻璃 UI 材质，唯美而不遮挡背景",
+                    fontSize = 12.sp,
+                    color = TextMutedSky
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 1. 小沁遮罩背景
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NeumorphicCardElevated, shape = RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "🌿", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("小沁微休息遮罩背景", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDarkNavy)
+                        }
+                        Text(
+                            text = if (prefs.xiaoQinBgUri != null) "已使用自选相册壁纸" else "默认天空蓝渐变",
+                            fontSize = 11.sp,
+                            color = if (prefs.xiaoQinBgUri != null) AccentMintGreen else TextMutedSky,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val xiaoQinBitmap = remember(prefs.xiaoQinBgUri) {
+                        val path = prefs.xiaoQinBgUri
+                        if (!path.isNullOrEmpty()) {
+                            try {
+                                val file = java.io.File(path)
+                                if (file.exists()) android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap() else null
+                            } catch (e: Exception) { null }
+                        } else null
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(95.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                if (xiaoQinBitmap == null) Brush.linearGradient(listOf(Color(0xFFB1D6EA), Color(0xFFD5EAF5))) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (xiaoQinBitmap != null) {
+                            Image(
+                                bitmap = xiaoQinBitmap,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(500.dp))
+                                .background(Color.White.copy(alpha = 0.25f))
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(500.dp))
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            QinMuEmoji("🌿", size = 16.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("液态玻璃材质 UI 效果预览", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        NeumorphicPillButton(
+                            onClick = { xiaoQinBgPickerLauncher.launch("image/*") },
+                            modifier = Modifier.weight(1f),
+                            containerColor = AccentRoyalBlue
+                        ) {
+                            Text("🖼️ 从相册选择小沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        if (prefs.xiaoQinBgUri != null) {
+                            NeumorphicPillButton(
+                                onClick = { viewModel.clearXiaoQinBackground(context) },
+                                containerColor = NeumorphicCardSurface
+                            ) {
+                                Text("恢复默认", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AccentWarmOrange)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 2. 大沁遮罩背景
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(NeumorphicCardElevated, shape = RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "🧘", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("大沁深度放松遮罩背景", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimaryDarkNavy)
+                        }
+                        Text(
+                            text = if (prefs.daQinBgUri != null) "已使用自选相册壁纸" else "默认天空蓝渐变",
+                            fontSize = 11.sp,
+                            color = if (prefs.daQinBgUri != null) AccentMintGreen else TextMutedSky,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val daQinBitmap = remember(prefs.daQinBgUri) {
+                        val path = prefs.daQinBgUri
+                        if (!path.isNullOrEmpty()) {
+                            try {
+                                val file = java.io.File(path)
+                                if (file.exists()) android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap() else null
+                            } catch (e: Exception) { null }
+                        } else null
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(95.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                if (daQinBitmap == null) Brush.linearGradient(listOf(Color(0xFFB1D6EA), Color(0xFFD5EAF5))) else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (daQinBitmap != null) {
+                            Image(
+                                bitmap = daQinBitmap,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(500.dp))
+                                .background(Color.White.copy(alpha = 0.25f))
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(500.dp))
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            QinMuEmoji("🧘", size = 16.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("液态玻璃 UI 效果预览", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        NeumorphicPillButton(
+                            onClick = { daQinBgPickerLauncher.launch("image/*") },
+                            modifier = Modifier.weight(1f),
+                            containerColor = AccentRoyalBlue
+                        ) {
+                            Text("🖼️ 从相册选择大沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        if (prefs.daQinBgUri != null) {
+                            NeumorphicPillButton(
+                                onClick = { viewModel.clearDaQinBackground(context) },
+                                containerColor = NeumorphicCardSurface
+                            ) {
+                                Text("恢复默认", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AccentWarmOrange)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // =========================================================================
         // 2. 智能会议与游戏免打扰配置
         // =========================================================================
-        Text(
-            text = "💼 会议与 🎮 游戏智能免打扰",
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            color = AccentRoyalBlue,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "💼", size = 20.dp)
+            Spacer(modifier = Modifier.width(4.dp))
+            QinMuEmoji(symbol = "🎮", size = 20.dp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "会议与游戏智能免打扰",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = AccentRoyalBlue
+            )
+        }
 
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
@@ -203,10 +458,10 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SpecialMode.values().forEach { mode ->
                         val isSelected = prefs.manualSpecialMode == mode
@@ -214,7 +469,13 @@ fun SettingsScreen(
                             selected = isSelected,
                             onClick = { viewModel.setManualSpecialMode(mode) },
                             shape = RoundedCornerShape(500.dp),
-                            label = { Text("${mode.iconRes} ${mode.displayName}") },
+                            label = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    QinMuEmoji(symbol = mode.iconRes, size = 18.dp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(mode.displayName)
+                                }
+                            },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = AccentRoyalBlue,
                                 selectedLabelColor = Color.White,
@@ -236,12 +497,16 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "💼 自动识别会议应用 (免打扰)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = TextPrimaryDarkNavy
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "💼", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "自动识别会议应用 (免打扰)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimaryDarkNavy
+                            )
+                        }
                         Text(
                             text = "自动检测腾讯会议、钉钉、Zoom、Teams等前台运行",
                             fontSize = 11.sp,
@@ -269,12 +534,16 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "🎮 自动识别游戏应用 (免打扰)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = TextPrimaryDarkNavy
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "🎮", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "自动识别游戏应用 (免打扰)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimaryDarkNavy
+                            )
+                        }
                         Text(
                             text = "前台运行全屏游戏时，绝对挂起全屏遮罩与响铃",
                             fontSize = 11.sp,
@@ -446,10 +715,10 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(text = "连屏提醒间隔", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(15, 20, 30, 45).forEach { minutes ->
                         val isSelected = prefs.remindIntervalMinutes == minutes
@@ -506,10 +775,10 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(text = "小沁休息时长 (远眺)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(15, 20, 30, 45).forEach { seconds ->
                         val isSelected = prefs.restDurationSeconds == seconds
@@ -578,10 +847,10 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(text = "触发频次 (完成几项小沁后触发大沁)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(2, 3, 4, 5).forEach { count ->
                             val isSelected = prefs.daQinCycleCount == count
@@ -603,10 +872,10 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(text = "大沁休息时长 (深度全身放松)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         listOf(120, 180, 300, 600).forEach { seconds ->
                             val min = seconds / 60
@@ -669,13 +938,18 @@ fun SettingsScreen(
         // =========================================================================
         // 5. 电子设备正确视距与护眼常识指南卡片
         // =========================================================================
-        Text(
-            text = "📐 电子设备正确视距与护眼常识",
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            color = AccentRoyalBlue,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "📐", size = 20.dp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "电子设备正确视距与护眼常识",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = AccentRoyalBlue
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
@@ -683,8 +957,10 @@ fun SettingsScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    QinMuEmoji(symbol = "📱", size = 16.dp)
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "📱 手机 / 平板视距：",
+                        text = "手机 / 平板视距：",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = AccentRoyalBlue
@@ -697,8 +973,10 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    QinMuEmoji(symbol = "💻", size = 16.dp)
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "💻 电脑显示屏视距：",
+                        text = "电脑显示屏视距：",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = AccentRoyalBlue
@@ -711,8 +989,10 @@ fun SettingsScreen(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    QinMuEmoji(symbol = "👀", size = 16.dp)
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "👀 视线倾角建议：",
+                        text = "视线倾角建议：",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = AccentRoyalBlue
@@ -731,13 +1011,16 @@ fun SettingsScreen(
         // =========================================================================
         // 6. 系统高级权限配置
         // =========================================================================
-        Text(
-            text = "🛡️ 系统高级权限配置",
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-            color = AccentRoyalBlue,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "🛡️", size = 20.dp)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "系统高级权限配置",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = AccentRoyalBlue
+            )
+        }
 
         NeumorphicCard(
             modifier = Modifier.fillMaxWidth(),
@@ -837,7 +1120,7 @@ fun SettingsScreen(
                     if (updateInfo != null) {
                         updateInfoState = updateInfo
                     } else {
-                        Toast.makeText(context, "当前已是最新版本 (v1.0.0)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "当前已是最新版本 (v2.0.0)", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -846,7 +1129,7 @@ fun SettingsScreen(
         ) {
             Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isCheckingUpdate) "正在检查更新..." else "检查版本更新 (v1.0.0)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(if (isCheckingUpdate) "正在检查更新..." else "检查版本更新 (v2.0.0)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
 
         updateInfoState?.let { updateInfo ->

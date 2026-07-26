@@ -14,6 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,7 +36,12 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import com.qinmu.eyecare.data.model.RestType
+import com.qinmu.eyecare.ui.components.QinMuEmoji
 import com.qinmu.eyecare.ui.theme.*
 import com.qinmu.eyecare.util.TimeUtils
 import kotlinx.coroutines.delay
@@ -91,16 +97,24 @@ class RestOverlayWindow(
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        val flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION or
+                WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             layoutParamsType,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            flags,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.CENTER
+            gravity = Gravity.FILL
+            x = 0
+            y = 0
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
@@ -111,6 +125,13 @@ class RestOverlayWindow(
         }
 
         overlayView = ComposeView(context).apply {
+            @Suppress("DEPRECATION")
+            systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            )
+
             lifecycleOwner?.let { owner ->
                 setViewTreeLifecycleOwner(owner)
                 setViewTreeViewModelStoreOwner(owner)
@@ -186,20 +207,66 @@ private fun RestOverlayContent(
 
     val isDaQin = restType == RestType.DA_QIN
 
+    val context = LocalContext.current
+    val repository = remember { (context.applicationContext as com.qinmu.eyecare.QinMuApplication).preferencesRepository }
+    val userPrefs by repository.userPreferencesFlow.collectAsState(initial = com.qinmu.eyecare.data.model.UserPreferences())
+
+    val customBgPath = if (isDaQin) userPrefs.daQinBgUri else userPrefs.xiaoQinBgUri
+    val customBitmap = remember(customBgPath) {
+        if (!customBgPath.isNullOrEmpty()) {
+            try {
+                val file = java.io.File(customBgPath)
+                if (file.exists() && file.length() > 0) {
+                    android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
+                } else null
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else null
+    }
+
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xE6B1D6EA),
-                        Color(0xF0D5EAF5),
-                        Color(0xF5F0F8FA)
-                    )
-                )
-            ),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        if (customBitmap != null) {
+            Image(
+                bitmap = customBitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            // Pure Crystal Lens Dark Contrast Vignette (No White Haze)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Black.copy(alpha = 0.10f),
+                                Color.Black.copy(alpha = 0.18f),
+                                Color.Black.copy(alpha = 0.30f)
+                            )
+                        )
+                    )
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color(0xFFB1D6EA),
+                                Color(0xFFD5EAF5),
+                                Color(0xFFF0F8FA)
+                            )
+                        )
+                    )
+            )
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -207,19 +274,33 @@ private fun RestOverlayContent(
                 .padding(24.dp)
                 .fillMaxWidth()
         ) {
-            // Mode Tag
+            // Ultra-Clear Pure Glass Mode Tag
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(500.dp))
-                    .background(if (isDaQin) AccentRoyalBlue else AccentMintGreen)
+                    .background(
+                        if (customBitmap != null)
+                            Color.White.copy(alpha = 0.05f)
+                        else
+                            if (isDaQin) AccentRoyalBlue.copy(alpha = 0.4f) else AccentMintGreen.copy(alpha = 0.4f)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(500.dp)
+                    )
                     .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                Text(
-                    text = if (isDaQin) "🧘 大沁 · 深度放松时刻" else "🌿 小沁 · 视力微休息",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    QinMuEmoji(symbol = if (isDaQin) "🧘" else "🌿", size = 20.dp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isDaQin) "大沁 · 深度放松时刻" else "小沁 · 视力微休息",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -229,14 +310,15 @@ private fun RestOverlayContent(
                     "连续专注久坐，请起身活动身体、深呼吸并做眼保健操"
                 else
                     "请将视线移开屏幕，看向 6 米外的远处放松眼肌",
-                color = TextSecondaryBlue,
+                color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
                 fontSize = 14.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Vinyl Breathing Disc
+            // Ultra-Clear Pure Crystal Glass Timer Disc (0 White Haze)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(200.dp)
@@ -245,35 +327,50 @@ private fun RestOverlayContent(
                     modifier = Modifier
                         .size(200.dp)
                         .scale(breatheScale)
-                        .neumorphicShadow(cornerRadius = 100.dp, elevation = 12.dp)
                         .clip(CircleShape)
-                        .background(NeumorphicSurface)
-                        .border(3.dp, Color.White, CircleShape)
+                        .background(
+                            if (customBitmap != null)
+                                Color.White.copy(alpha = 0.02f)
+                            else
+                                Color.White.copy(alpha = 0.12f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.linearGradient(
+                                listOf(Color.White.copy(alpha = 0.7f), Color.White.copy(alpha = 0.15f))
+                            ),
+                            shape = CircleShape
+                        )
                 )
                 Box(
                     modifier = Modifier
                         .size(150.dp)
                         .clip(CircleShape)
                         .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    AccentRoyalBlue,
-                                    Color(0xFF133B61)
-                                )
-                            )
+                            if (customBitmap != null)
+                                Color.White.copy(alpha = 0.03f)
+                            else
+                                Color.White.copy(alpha = 0.25f)
+                        )
+                        .border(
+                            width = 1.2.dp,
+                            brush = Brush.linearGradient(
+                                listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0.35f))
+                            ),
+                            shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = TimeUtils.formatSecondsToMS(remainingSeconds),
-                            color = Color.White,
+                            color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = if (isDaQin) "深度休息" else "远眺倒计时",
-                            color = Color(0xFFB1D6EA),
+                            color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else AccentRoyalBlue,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -283,31 +380,58 @@ private fun RestOverlayContent(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Distance Tip Card
-            NeumorphicCard(
-                modifier = Modifier.fillMaxWidth(),
-                cornerRadius = 20.dp
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "📐 正确用眼与设备安全距离",
-                        color = AccentRoyalBlue,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+            // Ultra-Clear Pure Glass Distance Tip Card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        if (customBitmap != null)
+                            Color.White.copy(alpha = 0.04f)
+                        else
+                            Color.White.copy(alpha = 0.25f)
                     )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = if (customBitmap != null) 0.5f else 0.8f),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QinMuEmoji(symbol = "📐", size = 18.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "正确用眼与设备安全距离",
+                            color = if (customBitmap != null) Color.White else AccentRoyalBlue,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("📱 手机/平板视距", color = TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text("保持 33 ~ 40 cm\n(约半臂距离)", color = TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                QinMuEmoji(symbol = "📱", size = 15.dp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("手机/平板视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("保持 33 ~ 40 cm\n(约半臂距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("💻 电脑显示器视距", color = TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            Text("保持 50 ~ 70 cm\n(约一臂直伸距离)", color = TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                QinMuEmoji(symbol = "💻", size = 15.dp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("电脑显示器视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("保持 50 ~ 70 cm\n(约一臂直伸距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
                         }
                     }
                 }
@@ -315,23 +439,63 @@ private fun RestOverlayContent(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Action Buttons
+            // Ultra-Clear Pure Glass Action Buttons
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NeumorphicPillButton(
-                    onClick = onSkip,
-                    containerColor = NeumorphicCardElevated
+                // 1. 跳过本次 (Pure Glass Pill)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(500.dp))
+                        .background(
+                            if (customBitmap != null)
+                                Color.White.copy(alpha = 0.05f)
+                            else
+                                Color.White.copy(alpha = 0.35f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(500.dp)
+                        )
+                        .clickable(onClick = onSkip)
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "跳过本次", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = AccentWarmOrange)
+                    Text(
+                        text = "跳过本次",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (customBitmap != null) Color.White else AccentWarmOrange
+                    )
                 }
 
-                NeumorphicPillButton(
-                    onClick = onFinish,
-                    containerColor = AccentRoyalBlue
+                // 2. 完成休息 (Pure Glass Pill)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(500.dp))
+                        .background(
+                            if (customBitmap != null)
+                                AccentRoyalBlue.copy(alpha = 0.45f)
+                            else
+                                AccentRoyalBlue.copy(alpha = 0.35f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = 0.7f),
+                            shape = RoundedCornerShape(500.dp)
+                        )
+                        .clickable(onClick = onFinish)
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "完成休息", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        text = "完成休息",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
             }
         }

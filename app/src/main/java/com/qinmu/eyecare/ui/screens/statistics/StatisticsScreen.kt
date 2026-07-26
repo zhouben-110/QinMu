@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qinmu.eyecare.data.model.UsageLogEntity
+import com.qinmu.eyecare.ui.components.QinMuEmoji
 import com.qinmu.eyecare.ui.theme.*
 import com.qinmu.eyecare.util.TimeUtils
 
@@ -53,13 +54,16 @@ fun StatisticsScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Title Header
-        Text(
-            text = "📊 护眼守护统计",
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 24.sp,
-            color = TextPrimaryDarkNavy
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            QinMuEmoji(symbol = "📊", size = 26.dp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "护眼守护统计",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 24.sp,
+                color = TextPrimaryDarkNavy
+            )
+        }
         Text(
             text = "小沁与大沁微休息历史趋势看板",
             fontSize = 13.sp,
@@ -278,7 +282,7 @@ private fun NeumorphicStatCard(
             modifier = Modifier.padding(14.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = icon, fontSize = 14.sp)
+                QinMuEmoji(symbol = icon, size = 20.dp)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(text = title, fontSize = 12.sp, color = TextSecondaryBlue, fontWeight = FontWeight.Bold)
             }
@@ -384,12 +388,16 @@ private fun NeumorphicDetailedLogItemRow(log: UsageLogEntity) {
                         .background(AccentRoyalBlue.copy(alpha = 0.15f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(
-                        text = "🌿 小沁 ${log.xiaoQinCount} 次",
-                        fontSize = 11.sp,
-                        color = AccentRoyalBlue,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QinMuEmoji(symbol = "🌿", size = 14.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "小沁 ${log.xiaoQinCount} 次",
+                            fontSize = 11.sp,
+                            color = AccentRoyalBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Box(
@@ -398,12 +406,16 @@ private fun NeumorphicDetailedLogItemRow(log: UsageLogEntity) {
                         .background(AccentSoftSky.copy(alpha = 0.2f))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(
-                        text = "🧘 大沁 ${log.daQinCount} 次",
-                        fontSize = 11.sp,
-                        color = AccentRoyalBlue,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QinMuEmoji(symbol = "🧘", size = 14.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "大沁 ${log.daQinCount} 次",
+                            fontSize = 11.sp,
+                            color = AccentRoyalBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Box(
@@ -412,12 +424,16 @@ private fun NeumorphicDetailedLogItemRow(log: UsageLogEntity) {
                         .background(NeumorphicCardElevated)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(
-                        text = "⏱️ 放假 ${TimeUtils.formatSecondsToMS(log.totalRestDurationSeconds.toInt())}",
-                        fontSize = 11.sp,
-                        color = TextSecondaryBlue,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QinMuEmoji(symbol = "⏱️", size = 14.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "放假 ${TimeUtils.formatSecondsToMS(log.totalRestDurationSeconds.toInt())}",
+                            fontSize = 11.sp,
+                            color = TextSecondaryBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 if (log.skipCount > 0) {
@@ -427,12 +443,16 @@ private fun NeumorphicDetailedLogItemRow(log: UsageLogEntity) {
                             .background(AccentWarmOrange.copy(alpha = 0.15f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text(
-                            text = "⚠️ 跳过 ${log.skipCount} 次",
-                            fontSize = 11.sp,
-                            color = AccentWarmOrange,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "⚠️", size = 14.dp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "跳过 ${log.skipCount} 次",
+                                fontSize = 11.sp,
+                                color = AccentWarmOrange,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

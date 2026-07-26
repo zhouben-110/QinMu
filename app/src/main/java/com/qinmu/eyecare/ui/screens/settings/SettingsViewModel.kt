@@ -97,4 +97,52 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
+
+    fun saveXiaoQinBackground(context: android.content.Context, uri: android.net.Uri) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = java.io.File(context.filesDir, "xiaoqin_bg_custom.jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    java.io.FileOutputStream(file).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                repository.updateXiaoQinBgUri(file.absolutePath)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun saveDaQinBackground(context: android.content.Context, uri: android.net.Uri) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = java.io.File(context.filesDir, "daqin_bg_custom.jpg")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    java.io.FileOutputStream(file).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                repository.updateDaQinBgUri(file.absolutePath)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun clearXiaoQinBackground(context: android.content.Context) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val file = java.io.File(context.filesDir, "xiaoqin_bg_custom.jpg")
+            if (file.exists()) file.delete()
+            repository.updateXiaoQinBgUri(null)
+        }
+    }
+
+    fun clearDaQinBackground(context: android.content.Context) {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val file = java.io.File(context.filesDir, "daqin_bg_custom.jpg")
+            if (file.exists()) file.delete()
+            repository.updateDaQinBgUri(null)
+        }
+    }
 }

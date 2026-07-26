@@ -52,9 +52,11 @@ class EyeProtectionService : Service() {
                     when (intent?.action) {
                         Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
                             isScreenOn = true
+                            updateTimerState()
                         }
                         Intent.ACTION_SCREEN_OFF -> {
                             isScreenOn = false
+                            updateTimerState()
                         }
                     }
                 }
@@ -80,9 +82,14 @@ class EyeProtectionService : Service() {
         when (intent?.action) {
             ACTION_SCREEN_ON -> {
                 isScreenOn = true
+                updateTimerState()
             }
             ACTION_SCREEN_OFF -> {
                 isScreenOn = false
+                updateTimerState()
+                serviceScope.launch {
+                    saveTodayScreenTime()
+                }
             }
             ACTION_SKIP_REST -> {
                 handleSkipRest()
@@ -92,6 +99,12 @@ class EyeProtectionService : Service() {
             }
             ACTION_TOGGLE_PAUSE -> {
                 _isPaused.value = !_isPaused.value
+                updateTimerState()
+                if (_isPaused.value) {
+                    serviceScope.launch {
+                        saveTodayScreenTime()
+                    }
+                }
             }
         }
         return START_STICKY
@@ -114,29 +127,53 @@ class EyeProtectionService : Service() {
         }
     }
 
+    private var timerJob: Job? = null
+
+    private fun updateTimerState() {
+        if (isScreenOn && !_isPaused.value) {
+            if (timerJob == null || timerJob?.isActive != true) {
+                startScreenTimeTimer()
+            }
+        } else {
+            // 🌟 架构级事件驱动：熄屏或暂停时彻底取消销毁计时 Job，实现零 CPU 计算、零后台唤醒 🌟
+            timerJob?.cancel()
+            timerJob = null
+        }
+    }
+
     private fun startScreenTimeTimer() {
-        serviceScope.launch {
+        timerJob?.cancel()
+        timerJob = serviceScope.launch {
             var checkAppCounter = 0
+            var lastTickTime = android.os.SystemClock.elapsedRealtime()
+
             while (isActive) {
                 delay(1000L)
-                if (isScreenOn && !_isPaused.value) {
-                    _currentScreenSeconds.value++
-                    _todayTotalSeconds.value++
+                val now = android.os.SystemClock.elapsedRealtime()
+                val deltaSec = ((now - lastTickTime) / 1000L).coerceAtLeast(1L)
+                lastTickTime = now
 
-                    if (_currentScreenSeconds.value % 10 == 0L) {
-                        saveTodayScreenTime()
-                    }
+                _currentScreenSeconds.value += deltaSec
+                _todayTotalSeconds.value += deltaSec
 
-                    // 每 3 秒检测一次前台应用智能识别模式
-                    checkAppCounter++
-                    if (checkAppCounter % 3 == 0) {
+                // 60 秒定期持久化
+                if (_currentScreenSeconds.value % 60 == 0L) {
+                    saveTodayScreenTime()
+                }
+
+                // 前台应用特例检测
+                checkAppCounter++
+                if (checkAppCounter % 5 == 0) {
+                    val needAppCheck = currentPreferences.manualSpecialMode == SpecialMode.NONE &&
+                            (currentPreferences.isAutoGameModeEnabled || currentPreferences.isAutoMeetingModeEnabled)
+                    if (needAppCheck) {
                         updateEffectiveSpecialMode()
                     }
+                }
 
-                    val thresholdSeconds = currentPreferences.remindIntervalMinutes * 60
-                    if (_currentScreenSeconds.value >= thresholdSeconds && !_isReminding) {
-                        triggerRestReminder()
-                    }
+                val thresholdSeconds = currentPreferences.remindIntervalMinutes * 60
+                if (_currentScreenSeconds.value >= thresholdSeconds && !_isReminding) {
+                    triggerRestReminder()
                 }
             }
         }
