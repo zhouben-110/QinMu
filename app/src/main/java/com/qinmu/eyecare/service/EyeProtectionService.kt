@@ -380,6 +380,8 @@ class EyeProtectionService : Service() {
     private fun handleResetTimer() {
         _isReminding = false
         _currentScreenSeconds.value = 0L
+        timerJob?.cancel()
+        timerJob = null
         SoundManager.stopSound()
         cancelRemindNotification()
         dismissOverlayWindow()
@@ -395,6 +397,8 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
+        timerJob?.cancel()
+        timerJob = null
         updateTimerState()
 
         SoundManager.stopSound()
@@ -425,6 +429,8 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
+        timerJob?.cancel()
+        timerJob = null
         updateTimerState()
 
         // 休息完成时播放与开始时一致的提示音效
