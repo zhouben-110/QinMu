@@ -47,6 +47,9 @@ class EyeProtectionService : Service() {
 
     private fun registerScreenReceiver() {
         try {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+            isScreenOn = powerManager?.isInteractive ?: true
+
             screenReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     when (intent?.action) {
@@ -67,10 +70,12 @@ class EyeProtectionService : Service() {
                 addAction(Intent.ACTION_USER_PRESENT)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(screenReceiver, filter, RECEIVER_NOT_EXPORTED)
+                // 🌟 Android 13/14/15/16 必备：必须使用 RECEIVER_EXPORTED 才能接收系统框架层发出的亮屏/熄屏/解锁广播 🌟
+                registerReceiver(screenReceiver, filter, RECEIVER_EXPORTED)
             } else {
                 registerReceiver(screenReceiver, filter)
             }
+            updateTimerState()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -144,37 +149,51 @@ class EyeProtectionService : Service() {
     private fun startScreenTimeTimer() {
         timerJob?.cancel()
         timerJob = serviceScope.launch {
+            val startRealtime = android.os.SystemClock.elapsedRealtime()
+            val initialScreenSec = _currentScreenSeconds.value
+            val initialTodaySec = _todayTotalSeconds.value
+
+            var lastSavedMinute = initialScreenSec / 60L
             var checkAppCounter = 0
-            var lastTickTime = android.os.SystemClock.elapsedRealtime()
 
             while (isActive) {
-                delay(1000L)
-                val now = android.os.SystemClock.elapsedRealtime()
-                val deltaSec = ((now - lastTickTime) / 1000L).coerceAtLeast(1L)
-                lastTickTime = now
+                val nowRealtime = android.os.SystemClock.elapsedRealtime()
+                val elapsedSec = (nowRealtime - startRealtime) / 1000L
 
-                _currentScreenSeconds.value += deltaSec
-                _todayTotalSeconds.value += deltaSec
+                val currentSec = initialScreenSec + elapsedSec
+                _currentScreenSeconds.value = currentSec
+                _todayTotalSeconds.value = initialTodaySec + elapsedSec
 
-                // 60 秒定期持久化
-                if (_currentScreenSeconds.value % 60 == 0L) {
+                // 每 60 秒持久化一次用眼日志
+                val currentMinute = currentSec / 60L
+                if (currentMinute > lastSavedMinute) {
+                    lastSavedMinute = currentMinute
                     saveTodayScreenTime()
                 }
 
-                // 前台应用特例检测
+                // 🌟 耗电优化与智能自动判定无缝融合策略 🌟
+                // 1. 开启智能判定：正常模式下每 2 秒检测一次前台 App（确保启动游戏 1~2 秒内瞬间响应）；
+                //    已处于游戏/会议中时，调整为 4 秒检测一次（减少 50% 后台 IPC 唤醒，保护游戏帧率与省电）。
+                // 2. 未开启智能判定：完全不轮询应用，后台直接采用 5000ms 高效低功耗休眠。
                 checkAppCounter++
-                if (checkAppCounter % 5 == 0) {
-                    val needAppCheck = currentPreferences.manualSpecialMode == SpecialMode.NONE &&
-                            (currentPreferences.isAutoGameModeEnabled || currentPreferences.isAutoMeetingModeEnabled)
-                    if (needAppCheck) {
+                val needAppCheck = currentPreferences.manualSpecialMode == SpecialMode.NONE &&
+                        (currentPreferences.isAutoGameModeEnabled || currentPreferences.isAutoMeetingModeEnabled)
+
+                if (needAppCheck) {
+                    val isSpecialActive = _effectiveSpecialMode.value != SpecialMode.NONE
+                    val checkInterval = if (isSpecialActive) 4 else 2
+                    if (checkAppCounter % checkInterval == 0) {
                         updateEffectiveSpecialMode()
                     }
                 }
 
-                val thresholdSeconds = currentPreferences.remindIntervalMinutes * 60
-                if (_currentScreenSeconds.value >= thresholdSeconds && !_isReminding) {
+                val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
+                if (currentSec >= thresholdSeconds && !_isReminding) {
                     triggerRestReminder()
                 }
+
+                val sleepInterval = if (!needAppCheck) 5000L else 1000L
+                delay(sleepInterval)
             }
         }
     }
@@ -200,11 +219,13 @@ class EyeProtectionService : Service() {
             _effectiveSpecialMode.value = newMode
             startForegroundServiceNotification()
 
-            // 如果从会议/游戏模式退出回到正常护眼模式，且此前用眼时长已超标，发送退出温馨补给提醒
+            // 如果从会议/游戏模式退出回到正常护眼模式，且此前用眼时长已超标，立刻补给弹出护眼提醒
             if ((previousMode == SpecialMode.MEETING || previousMode == SpecialMode.GAME) && newMode == SpecialMode.NONE) {
-                val thresholdSeconds = currentPreferences.remindIntervalMinutes * 60
+                val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
                 if (_currentScreenSeconds.value >= thresholdSeconds) {
                     showExitModeCatchUpNotification(previousMode)
+                    _isReminding = false
+                    triggerRestReminder()
                 }
             }
         }
@@ -361,6 +382,8 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
+        startScreenTimeTimer()
+
         SoundManager.stopSound()
         cancelRemindNotification()
         dismissOverlayWindow()
@@ -389,6 +412,7 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
+        startScreenTimeTimer()
 
         // 休息完成时播放与开始时一致的提示音效
         SoundManager.playSound(this, currentPreferences.soundEffect)
@@ -474,7 +498,15 @@ class EyeProtectionService : Service() {
                 .setOngoing(true)
                 .build()
 
-            startForeground(NOTIFICATION_ID_SERVICE, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NOTIFICATION_ID_SERVICE,
+                    notification,
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                startForeground(NOTIFICATION_ID_SERVICE, notification)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

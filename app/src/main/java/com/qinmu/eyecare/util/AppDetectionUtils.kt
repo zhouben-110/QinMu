@@ -17,13 +17,15 @@ object AppDetectionUtils {
         "us.zoom.videomeetings",    // Zoom
         "com.microsoft.teams",      // Teams
         "com.tencent.wework",       // 企业微信/微会议
-        "com.cisco.webex"           // Webex
+        "com.cisco.webex",          // Webex
+        "wemeet", "voovmeeting", "welink", "feishu", "meeting", "conference"
     )
 
     // 常见游戏包名特征关键字
     private val GAME_PACKAGE_KEYWORDS = listOf(
         "tmgp", "mihoyo", "hypergryph", "yostar", "proxima", "pubg", "codm",
-        "lol", "genshin", "honorofkings", "epicsaga", "ea.gp", "riotgames"
+        "lol", "genshin", "honorofkings", "epicsaga", "ea.gp", "riotgames",
+        "netease", "bilibili.game", "perfectworld", "supercell", "moonton", "aligames"
     )
 
     /**

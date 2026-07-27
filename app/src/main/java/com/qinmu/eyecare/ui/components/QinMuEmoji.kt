@@ -65,6 +65,7 @@ fun QinMuEmoji(
             "⚠️", "warning" -> WarningEmojiIcon(size = size)
             "🏆", "trophy" -> TrophyEmojiIcon(size = size)
             "🔊", "volume" -> VolumeEmojiIcon(size = size)
+            "🖼️", "picture", "image", "photo", "相册" -> PictureEmojiIcon(size = size)
             else -> FallbackEmojiBadge(symbol = cleanKey, size = size)
         }
     }
@@ -1131,6 +1132,49 @@ private fun VolumeEmojiIcon(size: Dp) {
                 quadraticBezierTo(w * 0.92f, h * 0.5f, w * 0.78f, h * 0.75f)
             }
             drawPath(path = arc2, color = Color.White, style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round))
+        }
+    }
+}
+
+/** 24. 🖼️ 自定义相册背景矢量图标 */
+@Composable
+private fun PictureEmojiIcon(size: Dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFF8B5CF6), Color(0xFF6D28D9), Color(0xFF4C1D95))
+                )
+            )
+            .border(1.dp, Color.White.copy(alpha = 0.45f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(size * 0.68f)) {
+            val w = this.size.width
+            val h = this.size.height
+
+            // 相框
+            drawRoundRect(
+                color = Color.White,
+                topLeft = Offset(w * 0.15f, h * 0.2f),
+                size = Size(w * 0.7f, h * 0.6f),
+                cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+            )
+
+            // 山峰 1
+            val mountain = Path().apply {
+                moveTo(w * 0.22f, h * 0.72f)
+                lineTo(w * 0.45f, h * 0.42f)
+                lineTo(w * 0.62f, h * 0.65f)
+                lineTo(w * 0.78f, h * 0.72f)
+                close()
+            }
+            drawPath(path = mountain, color = Color(0xFF6D28D9))
+
+            // 太阳
+            drawCircle(Color(0xFFFBBF24), center = Offset(w * 0.68f, h * 0.38f), radius = w * 0.08f)
         }
     }
 }

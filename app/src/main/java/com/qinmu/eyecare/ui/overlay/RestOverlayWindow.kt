@@ -44,7 +44,11 @@ import com.qinmu.eyecare.data.model.RestType
 import com.qinmu.eyecare.ui.components.QinMuEmoji
 import com.qinmu.eyecare.ui.theme.*
 import com.qinmu.eyecare.util.TimeUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private class OverlayLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -83,6 +87,7 @@ class RestOverlayWindow(
     private var windowManager: WindowManager? = null
     private var overlayView: ComposeView? = null
     private var lifecycleOwner: OverlayLifecycleOwner? = null
+    private var recomposerJob: Job? = null
 
     @SuppressLint("InflateParams")
     fun show(totalRestSeconds: Int, restType: RestType = RestType.XIAO_QIN) {
@@ -97,7 +102,9 @@ class RestOverlayWindow(
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        val flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        // 🌟 核心修复：后台服务窗口必须设置 FLAG_NOT_FOCUSABLE 允许在后台直接渲染与上屏 🌟
+        val flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                 WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
@@ -124,7 +131,15 @@ class RestOverlayWindow(
             performCreate()
         }
 
+        // 🌟 核心修复：使用 AndroidUiDispatcher.Main 为 Service 中的 Recomposer 提供 MonotonicFrameClock 帧时钟 🌟
+        val recomposer = Recomposer(androidx.compose.ui.platform.AndroidUiDispatcher.Main)
+        recomposerJob = CoroutineScope(androidx.compose.ui.platform.AndroidUiDispatcher.Main).launch {
+            recomposer.runRecomposeAndApplyChanges()
+        }
+
         overlayView = ComposeView(context).apply {
+            setParentCompositionContext(recomposer)
+
             @Suppress("DEPRECATION")
             systemUiVisibility = (
                 android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -170,6 +185,8 @@ class RestOverlayWindow(
                 e.printStackTrace()
             }
         }
+        recomposerJob?.cancel()
+        recomposerJob = null
         lifecycleOwner?.performDestroy()
         lifecycleOwner = null
         overlayView = null

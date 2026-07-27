@@ -315,7 +315,11 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f),
                             containerColor = AccentRoyalBlue
                         ) {
-                            Text("🖼️ 从相册选择小沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                QinMuEmoji("🖼️", size = 16.dp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("从相册选择小沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                         if (prefs.xiaoQinBgUri != null) {
                             NeumorphicPillButton(
@@ -412,7 +416,11 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f),
                             containerColor = AccentRoyalBlue
                         ) {
-                            Text("🖼️ 从相册选择大沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                QinMuEmoji("🖼️", size = 16.dp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("从相册选择大沁背景", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                         if (prefs.daQinBgUri != null) {
                             NeumorphicPillButton(
@@ -706,12 +714,22 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 1. 🌿 小沁（微休息）配置
-                Text(
-                    text = "1. 🌿 小沁（微休息）配置",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = AccentRoyalBlue
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "1. ",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = AccentRoyalBlue
+                    )
+                    QinMuEmoji(symbol = "🌿", size = 18.dp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "小沁（微休息）配置",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = AccentRoyalBlue
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(text = "连屏提醒间隔", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)
@@ -838,12 +856,22 @@ fun SettingsScreen(
                     HorizontalDivider(color = SpotifyBorder)
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "2. 🧘 大沁（深度放松）规则配置",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = AccentSoftSky
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "2. ",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = AccentSoftSky
+                        )
+                        QinMuEmoji(symbol = "🧘", size = 18.dp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "大沁（深度放松）规则配置",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = AccentSoftSky
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(text = "触发频次 (完成几项小沁后触发大沁)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryBlue)

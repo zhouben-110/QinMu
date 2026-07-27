@@ -518,12 +518,22 @@ fun DashboardScreen(
                                 .background(AccentWarmOrange)
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
-                            Text(
-                                text = "生效中: ${effectiveMode.iconRes} ${effectiveMode.displayName}",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "生效中: ",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                QinMuEmoji(symbol = effectiveMode.iconRes, size = 13.dp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = effectiveMode.displayName,
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
