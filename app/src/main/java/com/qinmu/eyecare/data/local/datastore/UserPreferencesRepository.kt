@@ -35,6 +35,9 @@ class UserPreferencesRepository(private val context: Context) {
         val IS_KEEP_ALIVE_ENABLED = booleanPreferencesKey("is_keep_alive_enabled")
         val XIAO_QIN_BG_URI = stringPreferencesKey("xiao_qin_bg_uri")
         val DA_QIN_BG_URI = stringPreferencesKey("da_qin_bg_uri")
+        val SAVED_SCREEN_SECONDS = longPreferencesKey("saved_screen_seconds")
+        val SAVED_LAST_ACTIVE_TIME = longPreferencesKey("saved_last_active_time")
+        val SAVED_XIAO_QIN_COMPLETED_COUNT = intPreferencesKey("saved_xiao_qin_completed_count")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
@@ -172,6 +175,43 @@ class UserPreferencesRepository(private val context: Context) {
             } else {
                 prefs.remove(PreferenceKeys.DA_QIN_BG_URI)
             }
+        }
+    }
+
+    data class SavedTimerState(
+        val screenSeconds: Long = 0L,
+        val lastActiveTimeMs: Long = 0L,
+        val xiaoQinCompletedCount: Int = 0
+    )
+
+    suspend fun getSavedTimerState(): SavedTimerState {
+        var result = SavedTimerState()
+        context.dataStore.data.map { prefs ->
+            SavedTimerState(
+                screenSeconds = prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] ?: 0L,
+                lastActiveTimeMs = prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] ?: 0L,
+                xiaoQinCompletedCount = prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] ?: 0
+            )
+        }.collect {
+            result = it
+            return@collect
+        }
+        return result
+    }
+
+    suspend fun saveTimerState(screenSeconds: Long, lastActiveTimeMs: Long, xiaoQinCompletedCount: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] = screenSeconds
+            prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] = lastActiveTimeMs
+            prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] = xiaoQinCompletedCount
+        }
+    }
+
+    suspend fun clearSavedTimerState() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(PreferenceKeys.SAVED_SCREEN_SECONDS)
+            prefs.remove(PreferenceKeys.SAVED_LAST_ACTIVE_TIME)
+            prefs.remove(PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT)
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.qinmu.eyecare.ui.main
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -166,10 +168,76 @@ fun MainScreen() {
                 }
             }
         ) { innerPadding ->
+            val routeOrder = listOf(Screen.Dashboard.route, Screen.Statistics.route, Screen.Settings.route)
+
             NavHost(
                 navController = navController,
                 startDestination = Screen.Dashboard.route,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    val initialIndex = routeOrder.indexOf(initialState.destination.route).coerceAtLeast(0)
+                    val targetIndex = routeOrder.indexOf(targetState.destination.route).coerceAtLeast(0)
+                    val isForward = targetIndex > initialIndex
+                    val slideOffset = if (isForward) 1f else -1f
+
+                    slideInHorizontally(
+                        initialOffsetX = { (it * slideOffset).toInt() },
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 280)
+                    ) + scaleIn(
+                        initialScale = 0.95f,
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    )
+                },
+                exitTransition = {
+                    val initialIndex = routeOrder.indexOf(initialState.destination.route).coerceAtLeast(0)
+                    val targetIndex = routeOrder.indexOf(targetState.destination.route).coerceAtLeast(0)
+                    val isForward = targetIndex > initialIndex
+                    val slideOffset = if (isForward) -0.3f else 0.3f
+
+                    slideOutHorizontally(
+                        targetOffsetX = { (it * slideOffset).toInt() },
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 240)
+                    ) + scaleOut(
+                        targetScale = 0.95f,
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    )
+                },
+                popEnterTransition = {
+                    val initialIndex = routeOrder.indexOf(initialState.destination.route).coerceAtLeast(0)
+                    val targetIndex = routeOrder.indexOf(targetState.destination.route).coerceAtLeast(0)
+                    val isForward = targetIndex > initialIndex
+                    val slideOffset = if (isForward) 1f else -1f
+
+                    slideInHorizontally(
+                        initialOffsetX = { (it * slideOffset).toInt() },
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 280)
+                    ) + scaleIn(
+                        initialScale = 0.95f,
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    )
+                },
+                popExitTransition = {
+                    val initialIndex = routeOrder.indexOf(initialState.destination.route).coerceAtLeast(0)
+                    val targetIndex = routeOrder.indexOf(targetState.destination.route).coerceAtLeast(0)
+                    val isForward = targetIndex > initialIndex
+                    val slideOffset = if (isForward) -0.3f else 0.3f
+
+                    slideOutHorizontally(
+                        targetOffsetX = { (it * slideOffset).toInt() },
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 240)
+                    ) + scaleOut(
+                        targetScale = 0.95f,
+                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing)
+                    )
+                }
             ) {
                 composable(Screen.Dashboard.route) {
                     DashboardScreen()

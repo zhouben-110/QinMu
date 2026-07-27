@@ -12,6 +12,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -242,10 +244,12 @@ private fun RestOverlayContent(
         } else null
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val isLandscape = maxWidth > maxHeight
+
         if (customBitmap != null) {
             Image(
                 bitmap = customBitmap,
@@ -253,7 +257,7 @@ private fun RestOverlayContent(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            // Pure Crystal Lens Dark Contrast Vignette (No White Haze)
+            // Pure Crystal Lens Dark Contrast Vignette
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -283,184 +287,203 @@ private fun RestOverlayContent(
             )
         }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth()
-        ) {
-            // Ultra-Clear Pure Glass Mode Tag
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(500.dp))
-                    .background(
-                        if (customBitmap != null)
-                            Color.White.copy(alpha = 0.05f)
-                        else
-                            if (isDaQin) AccentRoyalBlue.copy(alpha = 0.4f) else AccentMintGreen.copy(alpha = 0.4f)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = Color.White.copy(alpha = 0.7f),
-                        shape = RoundedCornerShape(500.dp)
-                    )
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    QinMuEmoji(symbol = if (isDaQin) "🧘" else "🌿", size = 20.dp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isDaQin) "大沁 · 深度放松时刻" else "小沁 · 视力微休息",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = if (isDaQin)
-                    "连续专注久坐，请起身活动身体、深呼吸并做眼保健操"
-                else
-                    "请将视线移开屏幕，看向 6 米外的远处放松眼肌",
-                color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Ultra-Clear Pure Crystal Glass Timer Disc (0 White Haze)
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(200.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .scale(breatheScale)
-                        .clip(CircleShape)
-                        .background(
-                            if (customBitmap != null)
-                                Color.White.copy(alpha = 0.02f)
-                            else
-                                Color.White.copy(alpha = 0.12f)
-                        )
-                        .border(
-                            width = 1.dp,
-                            brush = Brush.linearGradient(
-                                listOf(Color.White.copy(alpha = 0.7f), Color.White.copy(alpha = 0.15f))
-                            ),
-                            shape = CircleShape
-                        )
-                )
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (customBitmap != null)
-                                Color.White.copy(alpha = 0.03f)
-                            else
-                                Color.White.copy(alpha = 0.25f)
-                        )
-                        .border(
-                            width = 1.2.dp,
-                            brush = Brush.linearGradient(
-                                listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0.35f))
-                            ),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = TimeUtils.formatSecondsToMS(remainingSeconds),
-                            color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (isDaQin) "深度休息" else "远眺倒计时",
-                            color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else AccentRoyalBlue,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Ultra-Clear Pure Glass Distance Tip Card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(
-                        if (customBitmap != null)
-                            Color.White.copy(alpha = 0.04f)
-                        else
-                            Color.White.copy(alpha = 0.25f)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = Color.White.copy(alpha = if (customBitmap != null) 0.5f else 0.8f),
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                    .padding(16.dp)
-            ) {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        QinMuEmoji(symbol = "📐", size = 18.dp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "正确用眼与设备安全距离",
-                            color = if (customBitmap != null) Color.White else AccentRoyalBlue,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                QinMuEmoji(symbol = "📱", size = 15.dp)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("手机/平板视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("保持 33 ~ 40 cm\n(约半臂距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                QinMuEmoji(symbol = "💻", size = 15.dp)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("电脑显示器视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("保持 50 ~ 70 cm\n(约一臂直伸距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Ultra-Clear Pure Glass Action Buttons
+        if (isLandscape) {
+            // 🌟 横屏自适应布局：双列排版 + 可滚动，保证跳过/完成操作按钮 100% 可见可交互 🌟
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // 1. 跳过本次 (Pure Glass Pill)
+                // 左侧：提示与倒计时圆盘
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(500.dp))
+                            .background(
+                                if (customBitmap != null)
+                                    Color.White.copy(alpha = 0.05f)
+                                else
+                                    if (isDaQin) AccentRoyalBlue.copy(alpha = 0.4f) else AccentMintGreen.copy(alpha = 0.4f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(500.dp)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = if (isDaQin) "🧘" else "🌿", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isDaQin) "大沁 · 深度放松" else "小沁 · 视力微休息",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 缩小版倒计时圆盘
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(130.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(130.dp)
+                                .scale(breatheScale)
+                                .clip(CircleShape)
+                                .background(
+                                    if (customBitmap != null) Color.White.copy(alpha = 0.02f) else Color.White.copy(alpha = 0.12f)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    brush = Brush.linearGradient(
+                                        listOf(Color.White.copy(alpha = 0.7f), Color.White.copy(alpha = 0.15f))
+                                    ),
+                                    shape = CircleShape
+                                )
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (customBitmap != null) Color.White.copy(alpha = 0.03f) else Color.White.copy(alpha = 0.25f)
+                                )
+                                .border(
+                                    width = 1.2.dp,
+                                    brush = Brush.linearGradient(
+                                        listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0.35f))
+                                    ),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = TimeUtils.formatSecondsToMS(remainingSeconds),
+                                    color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = if (isDaQin) "深度休息" else "远眺倒计时",
+                                    color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else AccentRoyalBlue,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 右侧：护眼指南卡片与交互按钮
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .weight(1.2f)
+                        .padding(start = 12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (customBitmap != null) Color.White.copy(alpha = 0.04f) else Color.White.copy(alpha = 0.25f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = if (customBitmap != null) 0.5f else 0.8f),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                QinMuEmoji(symbol = "📐", size = 16.dp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "设备安全视距提示",
+                                    color = if (customBitmap != null) Color.White else AccentRoyalBlue,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("📱 手机/平板", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    Text("33-40cm (半臂距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 10.sp)
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("💻 电脑显示器", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    Text("50-70cm (一臂距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 交互按钮组
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(500.dp))
+                                .background(if (customBitmap != null) Color.White.copy(alpha = 0.05f) else Color.White.copy(alpha = 0.35f))
+                                .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(500.dp))
+                                .clickable(onClick = onSkip)
+                                .padding(horizontal = 20.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("跳过本次", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (customBitmap != null) Color.White else AccentWarmOrange)
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(500.dp))
+                                .background(if (customBitmap != null) AccentRoyalBlue.copy(alpha = 0.45f) else AccentRoyalBlue.copy(alpha = 0.35f))
+                                .border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(500.dp))
+                                .clickable(onClick = onFinish)
+                                .padding(horizontal = 20.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("完成休息", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+                }
+            }
+        } else {
+            // 竖屏标准布局（增加可滚动包装防止窄屏/低分辨率挤压）
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Ultra-Clear Pure Glass Mode Tag
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(500.dp))
@@ -468,50 +491,221 @@ private fun RestOverlayContent(
                             if (customBitmap != null)
                                 Color.White.copy(alpha = 0.05f)
                             else
-                                Color.White.copy(alpha = 0.35f)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = Color.White.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(500.dp)
-                        )
-                        .clickable(onClick = onSkip)
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "跳过本次",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (customBitmap != null) Color.White else AccentWarmOrange
-                    )
-                }
-
-                // 2. 完成休息 (Pure Glass Pill)
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(500.dp))
-                        .background(
-                            if (customBitmap != null)
-                                AccentRoyalBlue.copy(alpha = 0.45f)
-                            else
-                                AccentRoyalBlue.copy(alpha = 0.35f)
+                                if (isDaQin) AccentRoyalBlue.copy(alpha = 0.4f) else AccentMintGreen.copy(alpha = 0.4f)
                         )
                         .border(
                             width = 1.dp,
                             color = Color.White.copy(alpha = 0.7f),
                             shape = RoundedCornerShape(500.dp)
                         )
-                        .clickable(onClick = onFinish)
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
                 ) {
-                    Text(
-                        text = "完成休息",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        QinMuEmoji(symbol = if (isDaQin) "🧘" else "🌿", size = 20.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isDaQin) "大沁 · 深度放松时刻" else "小沁 · 视力微休息",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = if (isDaQin)
+                        "连续专注久坐，请起身活动身体、深呼吸并做眼保健操"
+                    else
+                        "请将视线移开屏幕，看向 6 米外的远处放松眼肌",
+                    color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Ultra-Clear Pure Crystal Glass Timer Disc
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(200.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(200.dp)
+                            .scale(breatheScale)
+                            .clip(CircleShape)
+                            .background(
+                                if (customBitmap != null)
+                                    Color.White.copy(alpha = 0.02f)
+                                else
+                                    Color.White.copy(alpha = 0.12f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.linearGradient(
+                                    listOf(Color.White.copy(alpha = 0.7f), Color.White.copy(alpha = 0.15f))
+                                ),
+                                shape = CircleShape
+                            )
                     )
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (customBitmap != null)
+                                    Color.White.copy(alpha = 0.03f)
+                                else
+                                    Color.White.copy(alpha = 0.25f)
+                            )
+                            .border(
+                                width = 1.2.dp,
+                                brush = Brush.linearGradient(
+                                    listOf(Color.White.copy(alpha = 0.95f), Color.White.copy(alpha = 0.35f))
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = TimeUtils.formatSecondsToMS(remainingSeconds),
+                                color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy,
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (isDaQin) "深度休息" else "远眺倒计时",
+                                color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else AccentRoyalBlue,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Ultra-Clear Pure Glass Distance Tip Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            if (customBitmap != null)
+                                Color.White.copy(alpha = 0.04f)
+                            else
+                                Color.White.copy(alpha = 0.25f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.White.copy(alpha = if (customBitmap != null) 0.5f else 0.8f),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            QinMuEmoji(symbol = "📐", size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "正确用眼与设备安全距离",
+                                color = if (customBitmap != null) Color.White else AccentRoyalBlue,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    QinMuEmoji(symbol = "📱", size = 15.dp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("手机/平板视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text("保持 33 ~ 40 cm\n(约半臂距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    QinMuEmoji(symbol = "💻", size = 15.dp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("电脑显示器视距", color = if (customBitmap != null) Color.White else TextPrimaryDarkNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text("保持 50 ~ 70 cm\n(约一臂直伸距离)", color = if (customBitmap != null) Color.White.copy(alpha = 0.9f) else TextSecondaryBlue, fontSize = 11.sp, lineHeight = 15.sp)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Ultra-Clear Pure Glass Action Buttons
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 1. 跳过本次 (Pure Glass Pill)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(500.dp))
+                            .background(
+                                if (customBitmap != null)
+                                    Color.White.copy(alpha = 0.05f)
+                                else
+                                    Color.White.copy(alpha = 0.35f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(500.dp)
+                            )
+                            .clickable(onClick = onSkip)
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "跳过本次",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (customBitmap != null) Color.White else AccentWarmOrange
+                        )
+                    }
+
+                    // 2. 完成休息 (Pure Glass Pill)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(500.dp))
+                            .background(
+                                if (customBitmap != null)
+                                    AccentRoyalBlue.copy(alpha = 0.45f)
+                                else
+                                    AccentRoyalBlue.copy(alpha = 0.35f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(500.dp)
+                            )
+                            .clickable(onClick = onFinish)
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "完成休息",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

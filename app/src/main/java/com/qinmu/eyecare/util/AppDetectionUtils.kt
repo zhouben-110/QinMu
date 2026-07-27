@@ -29,7 +29,7 @@ object AppDetectionUtils {
     )
 
     /**
-     * 获取当前前台应用包名
+     * 获取当前前台应用包名（更加精准的判定：过滤系统/桌面/SystemUI，返回用户真正交互的前台应用）
      */
     fun getForegroundPackageName(context: Context): String? {
         if (!PermissionUtils.hasUsageStatsPermission(context)) return null
@@ -39,7 +39,7 @@ object AppDetectionUtils {
                 ?: return null
 
             val endTime = System.currentTimeMillis()
-            val startTime = endTime - 10000 // 10秒窗口
+            val startTime = endTime - 15000 // 15秒时间窗口
 
             val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
             var currentPackage: String? = null
@@ -47,15 +47,48 @@ object AppDetectionUtils {
 
             while (usageEvents.hasNextEvent()) {
                 usageEvents.getNextEvent(event)
-                if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                    currentPackage = event.packageName
+                // 捕获切前台或切换 Activity 的事件
+                if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND || 
+                    event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                    val pkg = event.packageName
+                    // 过滤掉系统 UI、输入法、桌面以及沁目自身短暂停留引起的误判
+                    if (!isIgnoredPackage(pkg, context.packageName)) {
+                        currentPackage = pkg
+                    }
                 }
             }
+            
+            // 备用方案：如果 UsageEvents 查不出，使用 queryUsageStats 按 lastTimeUsed 降序兜底
+            if (currentPackage == null) {
+                val stats = usageStatsManager.queryUsageStats(
+                    UsageStatsManager.INTERVAL_DAILY,
+                    startTime,
+                    endTime
+                )
+                if (!stats.isNullOrEmpty()) {
+                    currentPackage = stats
+                        .filter { !isIgnoredPackage(it.packageName, context.packageName) }
+                        .maxByOrNull { it.lastTimeUsed }
+                        ?.packageName
+                }
+            }
+
             return currentPackage
         } catch (e: Exception) {
             e.printStackTrace()
             return null
         }
+    }
+
+    private fun isIgnoredPackage(pkgName: String, ownPackage: String): Boolean {
+        if (pkgName == ownPackage) return true
+        val lower = pkgName.lowercase()
+        return lower.contains("systemui") ||
+               lower.contains("launcher") ||
+               lower.contains("inputmethod") ||
+               lower.contains("nexuslauncher") ||
+               lower.contains("trebuchet") ||
+               lower == "android"
     }
 
     private val gamePackageCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()

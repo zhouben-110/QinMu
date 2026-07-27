@@ -1087,6 +1087,18 @@ fun SettingsScreen(
                         PermissionUtils.requestIgnoreBatteryOptimizations(context)
                     }
                 )
+
+                HorizontalDivider(color = SpotifyBorder)
+
+                PermissionItemRow(
+                    title = "应用自启动权限",
+                    desc = "跳转小米/华为/OPPO/Vivo等手机系统的【自启动管理】配置",
+                    isGranted = false,
+                    statusTextOverride = "前往配置",
+                    onClick = {
+                        PermissionUtils.requestAutoStartPermission(context)
+                    }
+                )
             }
         }
 
@@ -1213,6 +1225,7 @@ private fun PermissionItemRow(
     title: String,
     desc: String,
     isGranted: Boolean,
+    statusTextOverride: String? = null,
     onClick: () -> Unit
 ) {
     Row(
@@ -1239,7 +1252,7 @@ private fun PermissionItemRow(
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Text(
-                text = if (isGranted) "已授权" else "去授权",
+                text = statusTextOverride ?: if (isGranted) "已授权" else "去授权",
                 fontSize = 11.sp,
                 color = if (isGranted) AccentMintGreen else AccentWarmOrange,
                 fontWeight = FontWeight.Bold
