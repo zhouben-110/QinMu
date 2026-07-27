@@ -3,6 +3,6 @@
   "versionName": "2.0.2",
   "updateTitle": "发现 2.0.2 护眼全新版本！",
   "updateContent": "1. 新增连屏用眼计时与休息状态后台持久化存储，重启不丢秒\n2. 优化自动游戏/会议免打扰识别防抖，稳定不失效\n3. 新增横屏模式全屏遮罩自适应双列布局，交互顺畅\n4. 看板新增科学护眼知识卡片与极致功耗优化\n5. 导航面板新增 3D 顺滑切屏动画，支持各厂商自启动配置",
-  "downloadUrl": "https://github.com/zhouben-110/QinMu/releases/download/v2.0.2/QinMu_v2.0.2.apk",
+  "downloadUrl": "https://github.com/zhouben-110/QinMu/releases/download/v2.0.1/_v2.0.2.apk",
   "isForceUpdate": false
 }
