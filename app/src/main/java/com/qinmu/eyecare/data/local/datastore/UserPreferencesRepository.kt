@@ -15,6 +15,7 @@ import com.qinmu.eyecare.data.model.RestSoundEffect
 import com.qinmu.eyecare.data.model.SpecialMode
 import com.qinmu.eyecare.data.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "qinmu_user_prefs")
@@ -185,18 +186,13 @@ class UserPreferencesRepository(private val context: Context) {
     )
 
     suspend fun getSavedTimerState(): SavedTimerState {
-        var result = SavedTimerState()
-        context.dataStore.data.map { prefs ->
+        return context.dataStore.data.map { prefs ->
             SavedTimerState(
                 screenSeconds = prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] ?: 0L,
                 lastActiveTimeMs = prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] ?: 0L,
                 xiaoQinCompletedCount = prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] ?: 0
             )
-        }.collect {
-            result = it
-            return@collect
-        }
-        return result
+        }.first()
     }
 
     suspend fun saveTimerState(screenSeconds: Long, lastActiveTimeMs: Long, xiaoQinCompletedCount: Int) {
