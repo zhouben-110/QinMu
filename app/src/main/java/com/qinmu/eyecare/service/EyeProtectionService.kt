@@ -121,8 +121,18 @@ class EyeProtectionService : Service() {
     private fun observePreferences() {
         serviceScope.launch {
             try {
+                var previousInterval = -1
                 QinMuApplication.instance.preferencesRepository.userPreferencesFlow.collect { prefs ->
+                    val isFirstLoad = (previousInterval == -1)
+                    val intervalChanged = !isFirstLoad && (previousInterval != prefs.remindIntervalMinutes)
+                    previousInterval = prefs.remindIntervalMinutes
                     currentPreferences = prefs
+
+                    // 🌟 核心优化：当用户在设置中调整用眼提醒间隔时，清空重置当前用眼计时器，防止直接误触发弹窗 🌟
+                    if (intervalChanged) {
+                        handleResetTimer()
+                    }
+
                     if (prefs.isKeepAliveEnabled) {
                         KeepAliveWorker.scheduleKeepAliveWork(this@EyeProtectionService)
                     } else {
