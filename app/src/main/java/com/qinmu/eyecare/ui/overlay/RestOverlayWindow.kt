@@ -102,14 +102,10 @@ class RestOverlayWindow(
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        // 🌟 核心修复：移除 FLAG_NOT_FOCUSABLE，允许 WindowManagerService 在后台触发时直接夺取窗口焦点并顶层置顶上屏 🌟
-        @Suppress("DEPRECATION")
-        val flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        val flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or
                 WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION or
                 WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS
