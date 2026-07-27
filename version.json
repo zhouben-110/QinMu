@@ -1,0 +1,8 @@
+{
+  "versionCode": 2,
+  "versionName": "2.0.0",
+  "updateTitle": "发现 2.0 护眼全新版本！",
+  "updateContent": "1. 优化界面交互与深度放松遮罩\n2. 新增音效剪辑与透明度调节\n3. 修复服务驻留问题",
+  "downloadUrl": "https://github.com/zhouben-110/QinMu/releases/download/v2.0/QinMu.apk",
+  "isForceUpdate": false
+}

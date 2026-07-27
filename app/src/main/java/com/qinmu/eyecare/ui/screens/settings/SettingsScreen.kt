@@ -1142,7 +1142,7 @@ fun SettingsScreen(
                 isCheckingUpdate = true
                 UpdateManager.checkUpdate(
                     context = context,
-                    jsonUrl = "https://raw.githubusercontent.com/qinmu/version/main/version.json"
+                    jsonUrl = "https://raw.githubusercontent.com/zhouben-110/QinMu/master/version.json"
                 ) { updateInfo ->
                     isCheckingUpdate = false
                     if (updateInfo != null) {
