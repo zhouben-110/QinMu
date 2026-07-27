@@ -111,6 +111,9 @@ class EyeProtectionService : Service() {
                     }
                 }
             }
+            ACTION_RESET_TIMER -> {
+                handleResetTimer()
+            }
         }
         return START_STICKY
     }
@@ -357,6 +360,7 @@ class EyeProtectionService : Service() {
         if (PermissionUtils.hasOverlayPermission(this)) {
             serviceScope.launch(Dispatchers.Main) {
                 try {
+                    restOverlayWindow?.dismiss()
                     restOverlayWindow = RestOverlayWindow(
                         context = this@EyeProtectionService,
                         onSkipRest = { handleSkipRest() },
@@ -373,6 +377,15 @@ class EyeProtectionService : Service() {
         }
     }
 
+    private fun handleResetTimer() {
+        _isReminding = false
+        _currentScreenSeconds.value = 0L
+        SoundManager.stopSound()
+        cancelRemindNotification()
+        dismissOverlayWindow()
+        updateTimerState()
+    }
+
     private fun handleSkipRest() {
         if (_currentActiveRestType.value == RestType.DA_QIN) {
             _xiaoQinCompletedCount.value = 0
@@ -382,7 +395,7 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
-        startScreenTimeTimer()
+        updateTimerState()
 
         SoundManager.stopSound()
         cancelRemindNotification()
@@ -412,7 +425,7 @@ class EyeProtectionService : Service() {
 
         _isReminding = false
         _currentScreenSeconds.value = 0L
-        startScreenTimeTimer()
+        updateTimerState()
 
         // 休息完成时播放与开始时一致的提示音效
         SoundManager.playSound(this, currentPreferences.soundEffect)
@@ -470,7 +483,10 @@ class EyeProtectionService : Service() {
             val today = TimeUtils.getTodayDateString()
             val dao = QinMuApplication.instance.database.usageLogDao()
             val log = dao.getLogByDate(today) ?: UsageLogEntity(date = today)
-            dao.insertOrUpdate(log.copy(screenOnTimeSeconds = log.screenOnTimeSeconds + 10))
+            val currentTotal = _todayTotalSeconds.value
+            if (currentTotal > log.screenOnTimeSeconds) {
+                dao.insertOrUpdate(log.copy(screenOnTimeSeconds = currentTotal))
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -537,6 +553,7 @@ class EyeProtectionService : Service() {
         const val ACTION_SKIP_REST = "com.qinmu.eyecare.SKIP_REST"
         const val ACTION_COMPLETE_REST = "com.qinmu.eyecare.COMPLETE_REST"
         const val ACTION_TOGGLE_PAUSE = "com.qinmu.eyecare.TOGGLE_PAUSE"
+        const val ACTION_RESET_TIMER = "com.qinmu.eyecare.RESET_TIMER"
 
         private var _isReminding = false
 

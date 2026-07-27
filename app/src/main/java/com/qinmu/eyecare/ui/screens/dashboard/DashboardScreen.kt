@@ -166,13 +166,13 @@ fun DashboardScreen(
                 ) {
                     // Refresh / Reset button
                     NeumorphicIconButton(
-                        onClick = { viewModel.skipCurrentRest(context) },
+                        onClick = { viewModel.resetTimer(context) },
                         size = 40.dp,
                         containerColor = NeumorphicCardElevated
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "跳过",
+                            contentDescription = "重置清零",
                             tint = AccentWarmOrange,
                             modifier = Modifier.size(20.dp)
                         )
@@ -186,7 +186,7 @@ fun DashboardScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,
-                            contentDescription = "下一个",
+                            contentDescription = "跳过本次",
                             tint = AccentRoyalBlue,
                             modifier = Modifier.size(20.dp)
                         )
@@ -208,7 +208,7 @@ fun DashboardScreen(
 
                     // Previous track / Rewind
                     NeumorphicIconButton(
-                        onClick = { },
+                        onClick = { viewModel.resetTimer(context) },
                         size = 40.dp,
                         containerColor = NeumorphicCardElevated
                     ) {

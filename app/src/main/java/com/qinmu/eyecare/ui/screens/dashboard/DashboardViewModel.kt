@@ -79,4 +79,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             e.printStackTrace()
         }
     }
+
+    fun resetTimer(context: Context) {
+        try {
+            val intent = Intent(context, EyeProtectionService::class.java).apply {
+                action = EyeProtectionService.ACTION_RESET_TIMER
+            }
+            context.startService(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

@@ -1076,6 +1076,17 @@ fun SettingsScreen(
                         hasUsagePermission = PermissionUtils.hasUsageStatsPermission(context)
                     }
                 )
+
+                HorizontalDivider(color = SpotifyBorder)
+
+                PermissionItemRow(
+                    title = "允许后台活动 (忽略电池优化)",
+                    desc = "解封系统后台弹出全屏遮罩限制，保证后台到点秒级弹窗",
+                    isGranted = PermissionUtils.isIgnoringBatteryOptimizations(context),
+                    onClick = {
+                        PermissionUtils.requestIgnoreBatteryOptimizations(context)
+                    }
+                )
             }
         }
 

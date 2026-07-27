@@ -58,15 +58,20 @@ object AppDetectionUtils {
         }
     }
 
+    private val gamePackageCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     /**
-     * 判断指定包名是否为游戏
+     * 判断指定包名是否为游戏 (使用 ConcurrentHashMap 缓存提升性能，极低功耗)
      */
     fun isGameApp(context: Context, packageName: String?): Boolean {
         if (packageName.isNullOrEmpty()) return false
+        gamePackageCache[packageName]?.let { return it }
+
         val pkg = packageName.lowercase()
 
         // 1. 关键字快速匹配
         if (GAME_PACKAGE_KEYWORDS.any { pkg.contains(it) }) {
+            gamePackageCache[packageName] = true
             return true
         }
 
@@ -82,16 +87,19 @@ object AppDetectionUtils {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (appInfo.category == ApplicationInfo.CATEGORY_GAME) {
+                    gamePackageCache[packageName] = true
                     return true
                 }
             }
             @Suppress("DEPRECATION")
             if ((appInfo.flags and ApplicationInfo.FLAG_IS_GAME) != 0) {
+                gamePackageCache[packageName] = true
                 return true
             }
         } catch (e: Exception) {
             // 包名未找到或异常
         }
+        gamePackageCache[packageName] = false
         return false
     }
 
