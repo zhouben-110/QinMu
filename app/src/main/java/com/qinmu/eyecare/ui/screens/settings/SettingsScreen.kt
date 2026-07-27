@@ -1145,6 +1145,8 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        val currentVersionName = remember { UpdateManager.getCurrentVersionName(context) }
+
         // =========================================================================
         // 8. 检查应用新版本
         // =========================================================================
@@ -1159,7 +1161,7 @@ fun SettingsScreen(
                     if (updateInfo != null) {
                         updateInfoState = updateInfo
                     } else {
-                        Toast.makeText(context, "当前已是最新版本 (v2.0.0)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "当前已是最新版本 (v${currentVersionName})", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -1168,7 +1170,7 @@ fun SettingsScreen(
         ) {
             Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isCheckingUpdate) "正在检查更新..." else "检查版本更新 (v2.0.0)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(if (isCheckingUpdate) "正在检查更新..." else "检查版本更新 (v${currentVersionName})", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
 
         updateInfoState?.let { updateInfo ->

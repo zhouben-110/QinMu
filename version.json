@@ -1,7 +1,7 @@
 {
-  "versionCode": 2,
+  "versionCode": 3,
   "versionName": "2.0.1",
-  "updateTitle": "发现 2.0 护眼全新版本！",
+  "updateTitle": "发现 2.0.1 护眼全新版本！",
   "updateContent": "1. 优化后台全屏遮罩到点置顶显示\n2. 修复暂停状态下的控制按键冲突\n3. 优化算法降低后台常驻功耗\n4. 适配 Android 13/14/15/16 最新系统",
   "downloadUrl": "https://github.com/zhouben-110/QinMu/releases/download/v2.0.1/_v2.0.1.apk",
   "isForceUpdate": false

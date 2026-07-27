@@ -131,7 +131,16 @@ object UpdateManager {
         context.startActivity(intent)
     }
 
-    private fun getCurrentVersionCode(context: Context): Int {
+    fun getCurrentVersionName(context: Context): String {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName ?: "2.0.1"
+        } catch (e: Exception) {
+            "2.0.1"
+        }
+    }
+
+    fun getCurrentVersionCode(context: Context): Int {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -141,7 +150,7 @@ object UpdateManager {
                 packageInfo.versionCode
             }
         } catch (e: Exception) {
-            1
+            3
         }
     }
 }
