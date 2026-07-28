@@ -25,11 +25,43 @@ object AppDetectionUtils {
     private val GAME_PACKAGE_KEYWORDS = listOf(
         "tmgp", "mihoyo", "hypergryph", "yostar", "proxima", "pubg", "codm",
         "lol", "genshin", "honorofkings", "epicsaga", "ea.gp", "riotgames",
-        "netease", "bilibili.game", "perfectworld", "supercell", "moonton", "aligames"
+        "bilibili.game", "perfectworld", "supercell", "moonton", "aligames",
+        "netease.g", "netease.onmyoji", "netease.moba", "netease.hyxd", "netease.identity5",
+        "netease.sky", "netease.h75", "netease.dunk", "gameloft", "ea.game"
     )
 
+    @Volatile
+    private var cachedDefaultLauncherPackage: String? = null
+
     /**
-     * 获取当前前台应用包名（更加精准的判定：过滤系统/桌面/SystemUI，返回用户真正交互的前台应用）
+     * 判断指定包名是否为桌面/系统 UI/Launcher (支持缓存极大降低系统 PackageManager IPC 开销)
+     */
+    fun isHomeOrLauncher(context: Context, packageName: String?): Boolean {
+        if (packageName.isNullOrEmpty()) return true
+        val lower = packageName.lowercase()
+        if (lower.contains("launcher") || lower.contains("desktop") ||
+            lower.contains("systemui") || lower.contains("trebuchet") || lower == "android") {
+            return true
+        }
+
+        var defaultLauncher = cachedDefaultLauncherPackage
+        if (defaultLauncher == null) {
+            try {
+                val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+                    addCategory(android.content.Intent.CATEGORY_HOME)
+                }
+                val resolveInfo = context.packageManager.resolveActivity(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                defaultLauncher = resolveInfo?.activityInfo?.packageName
+                cachedDefaultLauncherPackage = defaultLauncher
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+        return defaultLauncher == packageName
+    }
+
+    /**
+     * 获取当前前台应用包名（精准判定：捕获真正活跃的前台 Activity，退至桌面或关闭应用时精准切出）
      */
     fun getForegroundPackageName(context: Context): String? {
         if (!PermissionUtils.hasUsageStatsPermission(context)) return null
@@ -39,56 +71,49 @@ object AppDetectionUtils {
                 ?: return null
 
             val endTime = System.currentTimeMillis()
-            val startTime = endTime - 15000 // 15秒时间窗口
+            val startTime = endTime - 8000 // 8秒时间窗口
 
             val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
-            var currentPackage: String? = null
+            var lastForegroundPkg: String? = null
+            var lastForegroundTime = 0L
+            var lastBackgroundTime = 0L
             val event = UsageEvents.Event()
 
             while (usageEvents.hasNextEvent()) {
                 usageEvents.getNextEvent(event)
-                // 捕获切前台或切换 Activity 的事件
+                val pkg = event.packageName ?: continue
+
                 if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND || 
                     event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                    val pkg = event.packageName
-                    // 过滤掉系统 UI、输入法、桌面以及沁目自身短暂停留引起的误判
-                    if (!isIgnoredPackage(pkg, context.packageName)) {
-                        currentPackage = pkg
+                    if (event.timeStamp >= lastForegroundTime) {
+                        lastForegroundPkg = pkg
+                        lastForegroundTime = event.timeStamp
+                    }
+                } else if (event.eventType == UsageEvents.Event.MOVE_TO_BACKGROUND || 
+                           event.eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
+                    if (pkg == lastForegroundPkg) {
+                        lastBackgroundTime = event.timeStamp
                     }
                 }
             }
-            
-            // 备用方案：如果 UsageEvents 查不出，使用 queryUsageStats 按 lastTimeUsed 降序兜底
-            if (currentPackage == null) {
-                val stats = usageStatsManager.queryUsageStats(
-                    UsageStatsManager.INTERVAL_DAILY,
-                    startTime,
-                    endTime
-                )
-                if (!stats.isNullOrEmpty()) {
-                    currentPackage = stats
-                        .filter { !isIgnoredPackage(it.packageName, context.packageName) }
-                        .maxByOrNull { it.lastTimeUsed }
-                        ?.packageName
-                }
+
+            // 如果最后一次退后台的时间晚于切前台的时间，说明该应用已不在前台
+            if (lastBackgroundTime > lastForegroundTime) {
+                return null
             }
 
-            return currentPackage
+            // 过滤桌面、系统 UI 及应用自身
+            if (lastForegroundPkg == null || 
+                lastForegroundPkg == context.packageName || 
+                isHomeOrLauncher(context, lastForegroundPkg)) {
+                return null
+            }
+
+            return lastForegroundPkg
         } catch (e: Exception) {
             e.printStackTrace()
             return null
         }
-    }
-
-    private fun isIgnoredPackage(pkgName: String, ownPackage: String): Boolean {
-        if (pkgName == ownPackage) return true
-        val lower = pkgName.lowercase()
-        return lower.contains("systemui") ||
-               lower.contains("launcher") ||
-               lower.contains("inputmethod") ||
-               lower.contains("nexuslauncher") ||
-               lower.contains("trebuchet") ||
-               lower == "android"
     }
 
     private val gamePackageCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()

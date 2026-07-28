@@ -4,7 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.qinmu.eyecare.QinMuApplication
 import com.qinmu.eyecare.service.EyeProtectionService
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class ScreenStateReceiver : BroadcastReceiver() {
 
@@ -21,8 +24,17 @@ class ScreenStateReceiver : BroadcastReceiver() {
                 startService(context, serviceIntent)
             }
             Intent.ACTION_BOOT_COMPLETED -> {
-                serviceIntent.action = EyeProtectionService.ACTION_SCREEN_ON
-                startService(context, serviceIntent)
+                val isAutoStart = runBlocking {
+                    try {
+                        QinMuApplication.instance.preferencesRepository.userPreferencesFlow.first().isAutoStartEnabled
+                    } catch (e: Exception) {
+                        true
+                    }
+                }
+                if (isAutoStart) {
+                    serviceIntent.action = EyeProtectionService.ACTION_SCREEN_ON
+                    startService(context, serviceIntent)
+                }
             }
         }
     }

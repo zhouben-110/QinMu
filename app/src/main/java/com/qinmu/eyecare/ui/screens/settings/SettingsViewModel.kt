@@ -98,6 +98,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun setAutoStartEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateAutoStartEnabled(enabled)
+            if (!enabled) {
+                com.qinmu.eyecare.service.KeepAliveWorker.cancelKeepAliveWork(getApplication())
+            }
+        }
+    }
+
     fun saveXiaoQinBackground(context: android.content.Context, uri: android.net.Uri) {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {

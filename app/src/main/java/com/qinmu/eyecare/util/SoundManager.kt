@@ -25,6 +25,10 @@ object SoundManager {
                 try {
                     mediaPlayer = MediaPlayer().apply {
                         setDataSource(context, Uri.fromFile(customFile))
+                        setOnCompletionListener { mp ->
+                            mp.release()
+                            if (mediaPlayer == mp) mediaPlayer = null
+                        }
                         prepare()
                         start()
                     }
@@ -56,6 +60,10 @@ object SoundManager {
         try {
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, uri)
+                setOnCompletionListener { mp ->
+                    mp.release()
+                    if (mediaPlayer == mp) mediaPlayer = null
+                }
                 prepare()
                 seekTo(startMs.toInt())
                 start()

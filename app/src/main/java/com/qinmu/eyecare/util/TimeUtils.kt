@@ -11,6 +11,12 @@ object TimeUtils {
         return sdf.format(Date())
     }
 
+    fun getDateString(timestampMs: Long): String {
+        if (timestampMs <= 0) return ""
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return sdf.format(Date(timestampMs))
+    }
+
     fun formatSecondsToHMS(seconds: Long): String {
         val hrs = seconds / 3600
         val mins = (seconds % 3600) / 60

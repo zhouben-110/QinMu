@@ -26,6 +26,7 @@ data class UserPreferences(
     val remindMode: RemindMode = RemindMode.NOTIFICATION, // 默认温馨通知
     val soundEffect: RestSoundEffect = RestSoundEffect.SYSTEM_NOTIFICATION, // 提醒音效
     val isKeepAliveEnabled: Boolean = true, // 是否开启后台 WorkManager 周期性保活巡检开关
+    val isAutoStartEnabled: Boolean = true, // 是否允许应用开机自启动与后台自拉起
     val xiaoQinBgUri: String? = null, // 小沁自定义相册遮罩背景文件路径
     val daQinBgUri: String? = null    // 大沁自定义相册遮罩背景文件路径
 )

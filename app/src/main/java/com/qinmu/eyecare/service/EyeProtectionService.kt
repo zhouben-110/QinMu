@@ -27,6 +27,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class EyeProtectionService : Service() {
 
@@ -38,35 +40,51 @@ class EyeProtectionService : Service() {
     private var screenReceiver: BroadcastReceiver? = null
     @Volatile
     private var isStateRestored = false
+    private val restoreMutex = Mutex()
 
     override fun onCreate() {
         super.onCreate()
         startForegroundServiceNotification()
-        registerScreenReceiver()
-        observePreferences()
         serviceScope.launch {
             restoreTimerState()
-            startScreenTimeTimer()
+            registerScreenReceiver()
+            observePreferences()
+            updateTimerState()
         }
     }
 
     private suspend fun restoreTimerState() {
         if (isStateRestored) return
-        try {
-            val savedState = QinMuApplication.instance.preferencesRepository.getSavedTimerState()
-            if (savedState.screenSeconds > 0L) {
-                val nowMs = System.currentTimeMillis()
-                // 如果上一次保存的时间距现在不超过 12 小时且属于同一天，恢复计时秒数；如果熄屏/关机很长或过夜了，可以智能校准
-                val timeDiffMs = if (savedState.lastActiveTimeMs > 0) nowMs - savedState.lastActiveTimeMs else 0L
-                if (timeDiffMs in 0..12 * 3600 * 1000L) {
-                    _currentScreenSeconds.value = savedState.screenSeconds
+        restoreMutex.withLock {
+            if (isStateRestored) return@withLock
+            try {
+                val today = TimeUtils.getTodayDateString()
+
+                // 1. 从 Room 恢复今日累计用眼时长
+                val dao = QinMuApplication.instance.database.usageLogDao()
+                val todayLog = dao.getLogByDate(today)
+                if (todayLog != null && todayLog.screenOnTimeSeconds > 0L) {
+                    _todayTotalSeconds.value = todayLog.screenOnTimeSeconds
                 }
-                _xiaoQinCompletedCount.value = savedState.xiaoQinCompletedCount
+
+                // 2. 从持久化存储恢复未完成的单次倒计时秒数
+                val savedState = QinMuApplication.instance.preferencesRepository.getSavedTimerState()
+                if (savedState.screenSeconds > 0L) {
+                    val savedDate = TimeUtils.getDateString(savedState.lastActiveTimeMs)
+                    val isSameDay = (savedDate == today)
+                    val timeDiffMs = if (savedState.lastActiveTimeMs > 0) System.currentTimeMillis() - savedState.lastActiveTimeMs else 0L
+
+                    // 同一天、全新时间戳或在24小时合理时间差内，恢复用眼秒数与周期数
+                    if (isSameDay || savedState.lastActiveTimeMs == 0L || (timeDiffMs in 0..24 * 3600 * 1000L)) {
+                        _currentScreenSeconds.value = savedState.screenSeconds
+                        _xiaoQinCompletedCount.value = savedState.xiaoQinCompletedCount
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isStateRestored = true
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            isStateRestored = true
         }
     }
 
@@ -174,7 +192,8 @@ class EyeProtectionService : Service() {
 
     private var timerJob: Job? = null
 
-    private fun checkIsScreenInteractive(): Boolean {
+    private fun checkIsScreenInteractive(forceCheckPowerManager: Boolean = false): Boolean {
+        if (!forceCheckPowerManager) return isScreenOn
         return try {
             val powerManager = getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
             powerManager?.isInteractive ?: isScreenOn
@@ -184,7 +203,7 @@ class EyeProtectionService : Service() {
     }
 
     private fun updateTimerState() {
-        val actualScreenOn = checkIsScreenInteractive()
+        val actualScreenOn = checkIsScreenInteractive(forceCheckPowerManager = true)
         isScreenOn = actualScreenOn
 
         if (actualScreenOn && !_isPaused.value) {
@@ -192,7 +211,7 @@ class EyeProtectionService : Service() {
                 startScreenTimeTimer()
             }
         } else {
-            // 🌟 架构级事件驱动：熄屏或暂停时彻底取消销毁计时 Job，实现零 CPU 计算、零后台唤醒 🌟
+            // 🌟 极低功耗：熄屏或暂停时彻底取消销毁计时 Job，实现零 CPU 计算、零后台唤醒 🌟
             timerJob?.cancel()
             timerJob = null
         }
@@ -204,64 +223,60 @@ class EyeProtectionService : Service() {
             if (!isStateRestored) {
                 restoreTimerState()
             }
-            val startRealtime = android.os.SystemClock.elapsedRealtime()
-            val initialScreenSec = _currentScreenSeconds.value
-            val initialTodaySec = _todayTotalSeconds.value
 
-            var lastSavedSec = initialScreenSec
+            var lastSavedSec = _currentScreenSeconds.value
             var checkAppCounter = 0
 
             while (isActive) {
-                // 🌟 双重兜底：极低概率广播延迟或遗漏时，轮询检测发现系统物理屏幕已熄灭，立刻中断退出计时 🌟
-                if (!checkIsScreenInteractive()) {
-                    isScreenOn = false
-                    updateTimerState()
-                    saveTodayScreenTime()
-                    saveTimerStateToPreferences()
-                    break
+                // 🌟 功耗优化：无需每秒进行 PowerManager IPC 交互，仅当轮询计数达到 30 秒时才强行复核物理屏幕 🌟
+                if (checkAppCounter > 0 && checkAppCounter % 30 == 0) {
+                    if (!checkIsScreenInteractive(forceCheckPowerManager = true)) {
+                        isScreenOn = false
+                        updateTimerState()
+                        saveTodayScreenTime()
+                        saveTimerStateToPreferences()
+                        break
+                    }
                 }
-                val nowRealtime = android.os.SystemClock.elapsedRealtime()
-                val elapsedSec = (nowRealtime - startRealtime) / 1000L
 
-                val currentSec = initialScreenSec + elapsedSec
-                _currentScreenSeconds.value = currentSec
-                _todayTotalSeconds.value = initialTodaySec + elapsedSec
+                // 🌟 处于游戏模式/会议模式时，计时器停止计时 🌟
+                val isSpecialModeActive = _effectiveSpecialMode.value != SpecialMode.NONE
+                if (!isSpecialModeActive) {
+                    _currentScreenSeconds.value++
+                    _todayTotalSeconds.value++
+                }
 
-                // 每 15 秒增量持久化用眼日志与计时状态（已有 onTaskRemoved/ScreenOff/Pause 场景实时强存，落盘频率降低 80% 极其省电）
-                if (currentSec - lastSavedSec >= 15L) {
+                val currentSec = _currentScreenSeconds.value
+
+                // 🌟 功耗优化：持续用眼期间每 60 秒增量持久化一次（屏幕熄灭、暂停或退出时会自动立刻刷盘）🌟
+                if (currentSec - lastSavedSec >= 60L) {
                     lastSavedSec = currentSec
                     saveTodayScreenTime()
                     saveTimerStateToPreferences()
                 }
 
-                // 🌟 极致功耗优化与智能自动判定策略 🌟
-                // 1. 开启智能判定：正常模式下每 3 秒检测一次前台 App；
-                //    已处于游戏/会议中时，调整为 6 秒检测一次（减少 66% 后台 IPC 唤醒，保护游戏帧率与电池）。
-                // 2. 未开启智能判定：完全不轮询应用，采用低功耗休眠策略。
+                // 🌟 功耗与灵敏度平衡：正常模式每 3 秒检测一次前台应用，游戏/会议模式调整为 5 秒检测一次 🌟
                 checkAppCounter++
                 val needAppCheck = currentPreferences.manualSpecialMode == SpecialMode.NONE &&
                         (currentPreferences.isAutoGameModeEnabled || currentPreferences.isAutoMeetingModeEnabled)
 
                 if (needAppCheck) {
-                    val isSpecialActive = _effectiveSpecialMode.value != SpecialMode.NONE
-                    val checkInterval = if (isSpecialActive) 6 else 3
+                    val checkInterval = if (isSpecialModeActive) 5 else 3
                     if (checkAppCounter % checkInterval == 0) {
                         updateEffectiveSpecialMode()
                     }
                 }
 
                 val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
-                if (currentSec >= thresholdSeconds && !_isReminding) {
+                if (!isSpecialModeActive && currentSec >= thresholdSeconds && !_isReminding) {
                     triggerRestReminder()
                 }
 
-                // 🌟 精准 1000ms 脉冲调度：保证界面读秒 1 秒平滑无缝递增，彻底消除跳秒/跳帧现象 🌟
+                // 精准 1000ms 脉冲调度
                 delay(1000L)
             }
         }
     }
-
-    private var pendingExitModeCounter = 0
 
     private fun updateEffectiveSpecialMode() {
         val previousMode = _effectiveSpecialMode.value
@@ -280,71 +295,23 @@ class EyeProtectionService : Service() {
             }
         }
 
-        // 防抖策略：从 游戏/会议 模式切换为 NONE 时，需要连续 3 次（约 6~12 秒）检测为 NONE 才真正确认退出
-        val targetMode = if (previousMode != SpecialMode.NONE && detectedMode == SpecialMode.NONE && manualMode == SpecialMode.NONE) {
-            pendingExitModeCounter++
-            if (pendingExitModeCounter < 3) {
-                previousMode // 保持原模式，防止跳变
-            } else {
-                pendingExitModeCounter = 0
-                SpecialMode.NONE
-            }
-        } else {
-            pendingExitModeCounter = 0
-            detectedMode
-        }
+        val targetMode = detectedMode
 
         if (previousMode != targetMode) {
             _effectiveSpecialMode.value = targetMode
             startForegroundServiceNotification()
-
-            // 如果从会议/游戏模式确认退出回到正常护眼模式，且此前用眼时长已超标，立刻补给弹出护眼提醒
-            if ((previousMode == SpecialMode.MEETING || previousMode == SpecialMode.GAME) && targetMode == SpecialMode.NONE) {
-                val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
-                if (_currentScreenSeconds.value >= thresholdSeconds) {
-                    showExitModeCatchUpNotification(previousMode)
-                    _isReminding = false
-                    triggerRestReminder()
-                }
-            }
-        }
-    }
-
-    private fun showExitModeCatchUpNotification(exitFromMode: SpecialMode) {
-        try {
-            val modeName = if (exitFromMode == SpecialMode.MEETING) "会议" else "游戏"
-            val openAppIntent = Intent(this, MainActivity::class.java)
-            val openAppPendingIntent = PendingIntent.getActivity(
-                this, 200, openAppIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val notification = NotificationCompat.Builder(this, QinMuApplication.CHANNEL_ID_REMIND)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("🌿 沁目：${modeName}守护结束补给提示")
-                .setContentText("您已退出${modeName}模式，刚刚累计专注用眼较高，建议现在做一次护眼放松！")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(openAppPendingIntent)
-                .build()
-
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(NOTIFICATION_ID_REMIND, notification)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
     private fun triggerRestReminder() {
-        _isReminding = true
-
         val currentMode = _effectiveSpecialMode.value
 
-        // 🌟 在【会议模式】或【游戏模式】下绝对拦截全屏遮罩与响铃，保护专注力与画面 🌟
-        if (currentMode == SpecialMode.MEETING || currentMode == SpecialMode.GAME) {
-            val modeTitle = if (currentMode == SpecialMode.MEETING) "💼 会议模式" else "🎮 游戏模式"
-            showQuietNotification("$modeTitle：已为您挂起全屏遮罩提醒")
+        // 🌟 处于游戏模式或会议模式时，拦截全屏遮罩与响铃，且不触发挂起通知 🌟
+        if (currentMode != SpecialMode.NONE) {
             return
         }
+
+        _isReminding = true
 
         val isDaQin = currentPreferences.isDualCycleEnabled && 
                 (_xiaoQinCompletedCount.value + 1 >= currentPreferences.daQinCycleCount)
@@ -578,6 +545,7 @@ class EyeProtectionService : Service() {
     }
 
     private fun saveTimerStateToPreferences() {
+        if (!isStateRestored) return
         serviceScope.launch {
             try {
                 QinMuApplication.instance.preferencesRepository.saveTimerState(
@@ -630,11 +598,14 @@ class EyeProtectionService : Service() {
     override fun onDestroy() {
         runBlocking {
             try {
-                QinMuApplication.instance.preferencesRepository.saveTimerState(
-                    screenSeconds = _currentScreenSeconds.value,
-                    lastActiveTimeMs = System.currentTimeMillis(),
-                    xiaoQinCompletedCount = _xiaoQinCompletedCount.value
-                )
+                if (isStateRestored) {
+                    QinMuApplication.instance.preferencesRepository.saveTimerState(
+                        screenSeconds = _currentScreenSeconds.value,
+                        lastActiveTimeMs = System.currentTimeMillis(),
+                        xiaoQinCompletedCount = _xiaoQinCompletedCount.value
+                    )
+                    saveTodayScreenTime()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -656,12 +627,28 @@ class EyeProtectionService : Service() {
         super.onTaskRemoved(rootIntent)
         runBlocking {
             try {
-                QinMuApplication.instance.preferencesRepository.saveTimerState(
-                    screenSeconds = _currentScreenSeconds.value,
-                    lastActiveTimeMs = System.currentTimeMillis(),
-                    xiaoQinCompletedCount = _xiaoQinCompletedCount.value
-                )
-                saveTodayScreenTime()
+                if (isStateRestored) {
+                    QinMuApplication.instance.preferencesRepository.saveTimerState(
+                        screenSeconds = _currentScreenSeconds.value,
+                        lastActiveTimeMs = System.currentTimeMillis(),
+                        xiaoQinCompletedCount = _xiaoQinCompletedCount.value
+                    )
+                    saveTodayScreenTime()
+                }
+
+                val isAutoStart = currentPreferences.isAutoStartEnabled
+                if (!isAutoStart) {
+                    // 🌟 禁用自启动：在划掉后台任务卡片时彻底注销保活、移除前台通知、停止服务并终止进程 🌟
+                    KeepAliveWorker.cancelKeepAliveWork(this@EyeProtectionService)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        stopForeground(true)
+                    }
+                    stopSelf()
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

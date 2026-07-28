@@ -1108,7 +1108,7 @@ fun SettingsScreen(
         // 7. 后台防杀与心跳巡检 (WorkManager Keep-Alive Switch)
         // =========================================================================
         Text(
-            text = "后台防杀与心跳巡检",
+            text = "后台运行与自启动控制",
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
             color = AccentRoyalBlue,
@@ -1120,6 +1120,46 @@ fun SettingsScreen(
             cornerRadius = 20.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+                // 1. 开机自启动与后台驻留开关
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "允许应用开机自启动与后台驻留",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = TextPrimaryDarkNavy
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "关闭后，应用不会开机自启动；当您划掉清理后台卡片时，将彻底停止服务并终止进程",
+                            fontSize = 11.sp,
+                            color = TextMutedSky,
+                            lineHeight = 15.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Switch(
+                        checked = prefs.isAutoStartEnabled,
+                        onCheckedChange = { viewModel.setAutoStartEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = AccentRoyalBlue,
+                            uncheckedThumbColor = TextMutedSky,
+                            uncheckedTrackColor = NeumorphicCardElevated
+                        )
+                    )
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = TextMutedSky.copy(alpha = 0.15f)
+                )
+
+                // 2. 15分钟后台周期性保活巡检 (WorkManager)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

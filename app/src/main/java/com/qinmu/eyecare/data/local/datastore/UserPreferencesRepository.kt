@@ -17,6 +17,7 @@ import com.qinmu.eyecare.data.model.UserPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "qinmu_user_prefs")
 
@@ -34,6 +35,7 @@ class UserPreferencesRepository(private val context: Context) {
         val REMIND_MODE = stringPreferencesKey("remind_mode")
         val SOUND_EFFECT = stringPreferencesKey("sound_effect")
         val IS_KEEP_ALIVE_ENABLED = booleanPreferencesKey("is_keep_alive_enabled")
+        val IS_AUTO_START_ENABLED = booleanPreferencesKey("is_auto_start_enabled")
         val XIAO_QIN_BG_URI = stringPreferencesKey("xiao_qin_bg_uri")
         val DA_QIN_BG_URI = stringPreferencesKey("da_qin_bg_uri")
         val SAVED_SCREEN_SECONDS = longPreferencesKey("saved_screen_seconds")
@@ -73,6 +75,7 @@ class UserPreferencesRepository(private val context: Context) {
         }
 
         val isKeepAlive = prefs[PreferenceKeys.IS_KEEP_ALIVE_ENABLED] ?: true
+        val isAutoStart = prefs[PreferenceKeys.IS_AUTO_START_ENABLED] ?: true
         val xiaoQinBg = prefs[PreferenceKeys.XIAO_QIN_BG_URI]
         val daQinBg = prefs[PreferenceKeys.DA_QIN_BG_URI]
 
@@ -88,6 +91,7 @@ class UserPreferencesRepository(private val context: Context) {
             remindMode = mode,
             soundEffect = sound,
             isKeepAliveEnabled = isKeepAlive,
+            isAutoStartEnabled = isAutoStart,
             xiaoQinBgUri = xiaoQinBg,
             daQinBgUri = daQinBg
         )
@@ -159,6 +163,12 @@ class UserPreferencesRepository(private val context: Context) {
         }
     }
 
+    suspend fun updateAutoStartEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferenceKeys.IS_AUTO_START_ENABLED] = enabled
+        }
+    }
+
     suspend fun updateXiaoQinBgUri(path: String?) {
         context.dataStore.edit { prefs ->
             if (path != null) {
@@ -185,29 +195,74 @@ class UserPreferencesRepository(private val context: Context) {
         val xiaoQinCompletedCount: Int = 0
     )
 
-    suspend fun getSavedTimerState(): SavedTimerState {
-        return context.dataStore.data.map { prefs ->
-            SavedTimerState(
-                screenSeconds = prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] ?: 0L,
-                lastActiveTimeMs = prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] ?: 0L,
-                xiaoQinCompletedCount = prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] ?: 0
+    fun getSavedTimerState(): SavedTimerState {
+        val sp = context.getSharedPreferences("qinmu_timer_state_sp", Context.MODE_PRIVATE)
+        val sec = sp.getLong("saved_screen_seconds", -1L)
+        if (sec >= 0L) {
+            return SavedTimerState(
+                screenSeconds = sec,
+                lastActiveTimeMs = sp.getLong("saved_last_active_time", 0L),
+                xiaoQinCompletedCount = sp.getInt("saved_xiao_qin_completed_count", 0)
             )
-        }.first()
-    }
-
-    suspend fun saveTimerState(screenSeconds: Long, lastActiveTimeMs: Long, xiaoQinCompletedCount: Int) {
-        context.dataStore.edit { prefs ->
-            prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] = screenSeconds
-            prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] = lastActiveTimeMs
-            prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] = xiaoQinCompletedCount
+        }
+        return try {
+            runBlocking {
+                context.dataStore.data.map { prefs ->
+                    SavedTimerState(
+                        screenSeconds = prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] ?: 0L,
+                        lastActiveTimeMs = prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] ?: 0L,
+                        xiaoQinCompletedCount = prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] ?: 0
+                    )
+                }.first()
+            }
+        } catch (e: Exception) {
+            SavedTimerState()
         }
     }
 
-    suspend fun clearSavedTimerState() {
-        context.dataStore.edit { prefs ->
-            prefs.remove(PreferenceKeys.SAVED_SCREEN_SECONDS)
-            prefs.remove(PreferenceKeys.SAVED_LAST_ACTIVE_TIME)
-            prefs.remove(PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT)
+    fun saveTimerState(screenSeconds: Long, lastActiveTimeMs: Long, xiaoQinCompletedCount: Int) {
+        try {
+            // 🌟 使用 SharedPreferences.commit() 同步刷盘，彻底避免后台被杀时 DataStore 异步落盘中断失效 🌟
+            val sp = context.getSharedPreferences("qinmu_timer_state_sp", Context.MODE_PRIVATE)
+            sp.edit()
+                .putLong("saved_screen_seconds", screenSeconds)
+                .putLong("saved_last_active_time", lastActiveTimeMs)
+                .putInt("saved_xiao_qin_completed_count", xiaoQinCompletedCount)
+                .commit()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            runBlocking {
+                context.dataStore.edit { prefs ->
+                    prefs[PreferenceKeys.SAVED_SCREEN_SECONDS] = screenSeconds
+                    prefs[PreferenceKeys.SAVED_LAST_ACTIVE_TIME] = lastActiveTimeMs
+                    prefs[PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT] = xiaoQinCompletedCount
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+    }
+
+    fun clearSavedTimerState() {
+        try {
+            val sp = context.getSharedPreferences("qinmu_timer_state_sp", Context.MODE_PRIVATE)
+            sp.edit().clear().commit()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        try {
+            runBlocking {
+                context.dataStore.edit { prefs ->
+                    prefs.remove(PreferenceKeys.SAVED_SCREEN_SECONDS)
+                    prefs.remove(PreferenceKeys.SAVED_LAST_ACTIVE_TIME)
+                    prefs.remove(PreferenceKeys.SAVED_XIAO_QIN_COMPLETED_COUNT)
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
         }
     }
 }

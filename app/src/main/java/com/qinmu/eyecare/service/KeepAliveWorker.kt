@@ -8,6 +8,9 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.qinmu.eyecare.QinMuApplication
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class KeepAliveWorker(
@@ -17,6 +20,18 @@ class KeepAliveWorker(
 
     override fun doWork(): Result {
         try {
+            val isAutoStart = runBlocking {
+                try {
+                    QinMuApplication.instance.preferencesRepository.userPreferencesFlow.first().isAutoStartEnabled
+                } catch (e: Exception) {
+                    true
+                }
+            }
+            if (!isAutoStart) {
+                cancelKeepAliveWork(context)
+                return Result.success()
+            }
+
             val serviceIntent = Intent(context, EyeProtectionService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
