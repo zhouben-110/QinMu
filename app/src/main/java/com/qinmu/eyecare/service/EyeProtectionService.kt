@@ -178,7 +178,7 @@ class EyeProtectionService : Service() {
                         handleResetTimer()
                     }
 
-                    if (prefs.isKeepAliveEnabled) {
+                    if (prefs.isKeepAliveEnabled && prefs.isAutoStartEnabled) {
                         KeepAliveWorker.scheduleKeepAliveWork(this@EyeProtectionService)
                     } else {
                         KeepAliveWorker.cancelKeepAliveWork(this@EyeProtectionService)
@@ -226,10 +226,41 @@ class EyeProtectionService : Service() {
 
             var lastSavedSec = _currentScreenSeconds.value
             var checkAppCounter = 0
+            var lastTickTimestamp = android.os.SystemClock.elapsedRealtime()
 
             while (isActive) {
+                val currentTimestamp = android.os.SystemClock.elapsedRealtime()
+                val deltaMs = currentTimestamp - lastTickTimestamp
+                val deltaSeconds = deltaMs / 1000L
+
+                if (deltaSeconds > 0L) {
+                    lastTickTimestamp += deltaSeconds * 1000L
+
+                    // 🌟 处于游戏模式/会议模式时，计时器暂停计秒 🌟
+                    val isSpecialModeActive = _effectiveSpecialMode.value != SpecialMode.NONE
+                    if (!isSpecialModeActive) {
+                        _currentScreenSeconds.value += deltaSeconds
+                        _todayTotalSeconds.value += deltaSeconds
+                    }
+
+                    val currentSec = _currentScreenSeconds.value
+
+                    // 🌟 功耗优化：持续用眼期间每 60 秒增量持久化一次（屏幕熄灭、暂停或退出时会自动立刻刷盘）🌟
+                    if (currentSec - lastSavedSec >= 60L) {
+                        lastSavedSec = currentSec
+                        saveTodayScreenTime()
+                        saveTimerStateToPreferences()
+                    }
+
+                    val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
+                    if (!isSpecialModeActive && currentSec >= thresholdSeconds && !_isReminding) {
+                        triggerRestReminder()
+                    }
+                }
+
                 // 🌟 功耗优化：无需每秒进行 PowerManager IPC 交互，仅当轮询计数达到 30 秒时才强行复核物理屏幕 🌟
-                if (checkAppCounter > 0 && checkAppCounter % 30 == 0) {
+                checkAppCounter++
+                if (checkAppCounter % 30 == 0) {
                     if (!checkIsScreenInteractive(forceCheckPowerManager = true)) {
                         isScreenOn = false
                         updateTimerState()
@@ -239,24 +270,8 @@ class EyeProtectionService : Service() {
                     }
                 }
 
-                // 🌟 处于游戏模式/会议模式时，计时器停止计时 🌟
+                // 🌟 功耗与灵敏度平衡：仅在开启自动检测且未手动指定模式时检测前台应用 🌟
                 val isSpecialModeActive = _effectiveSpecialMode.value != SpecialMode.NONE
-                if (!isSpecialModeActive) {
-                    _currentScreenSeconds.value++
-                    _todayTotalSeconds.value++
-                }
-
-                val currentSec = _currentScreenSeconds.value
-
-                // 🌟 功耗优化：持续用眼期间每 60 秒增量持久化一次（屏幕熄灭、暂停或退出时会自动立刻刷盘）🌟
-                if (currentSec - lastSavedSec >= 60L) {
-                    lastSavedSec = currentSec
-                    saveTodayScreenTime()
-                    saveTimerStateToPreferences()
-                }
-
-                // 🌟 功耗与灵敏度平衡：正常模式每 3 秒检测一次前台应用，游戏/会议模式调整为 5 秒检测一次 🌟
-                checkAppCounter++
                 val needAppCheck = currentPreferences.manualSpecialMode == SpecialMode.NONE &&
                         (currentPreferences.isAutoGameModeEnabled || currentPreferences.isAutoMeetingModeEnabled)
 
@@ -267,13 +282,10 @@ class EyeProtectionService : Service() {
                     }
                 }
 
-                val thresholdSeconds = (currentPreferences.remindIntervalMinutes * 60).toLong()
-                if (!isSpecialModeActive && currentSec >= thresholdSeconds && !_isReminding) {
-                    triggerRestReminder()
-                }
-
-                // 精准 1000ms 脉冲调度
-                delay(1000L)
+                // 精准自适应休眠：补偿逻辑处理耗时，维持 1000ms 的平滑调度脉冲
+                val elapsedInLoop = android.os.SystemClock.elapsedRealtime() - currentTimestamp
+                val delayMs = (1000L - elapsedInLoop).coerceAtLeast(100L)
+                delay(delayMs)
             }
         }
     }
